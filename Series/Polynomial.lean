@@ -213,3 +213,35 @@ lemma Array.poly_toSubarray' (f : Array R) (a : ℕ) : (f.toSubarray 0 a).poly =
     Polynomial.coeff_modByMnnic_X_pow, ← extend_eq_coeff_poly]
 
 end CommRing
+
+/-!
+### Truncation to `ℕ∞` orders
+-/
+
+section Truncate
+
+variable {S : Type} [Semiring S]
+variable {f g : Subarray S} {x : S}
+
+/-- Truncate a polynomial to order `n : ℕ∞`. For finite orders, this corresponds to `%ₘ X ^ n`. -/
+def Polynomial.trunc (f : S[X]) (n : ℕ∞) : S[X] :=
+  ⟨f.toFinsupp.filter fun k ↦ k < n⟩
+
+lemma Polynomial.coeff_trunc (f : S[X]) (n : ℕ∞) (i : ℕ) :
+    (f.trunc n).coeff i = if i < n then f.coeff i else 0 := by
+  simp only [coeff, trunc, Finsupp.filter_apply]
+
+@[simp] lemma Polynomial.trunc_zero (f : S[X]) : f.trunc 0 = 0 := by
+  ext i
+  simp only [coeff_trunc, ENat.not_lt_zero, ↓reduceIte, coeff_zero]
+
+@[simp] lemma Polynomial.zero_trunc (n : ℕ∞) : (0 : S[X]).trunc n = 0 := by
+  ext i
+  simp only [coeff_trunc, coeff_zero, ite_self]
+
+@[simp] lemma Array.poly_takeLt (f : Array S) (n : ℕ∞) : (f.takeLt n).poly = f.poly.trunc n := by
+  ext i
+  simp only [takeLt, ← Subarray.extend_eq_coeff_poly, extend_toSubarray, tsub_zero,
+    ENat.lt_min_coe_iff, add_zero, Polynomial.coeff_trunc, ← extend_eq_coeff_poly]
+  split_ifs with h0 h1
+  all_goals simp_all

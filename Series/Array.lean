@@ -2,6 +2,7 @@ import Mathlib.Algebra.BigOperators.Group.Finset.Basic
 import Mathlib.Algebra.Order.Ring.Nat
 import Mathlib.Algebra.Order.Sub.Basic
 import Interval.Approx
+import Series.ENat
 import Series.List
 
 /-!
@@ -113,11 +114,13 @@ lemma Subarray.extend_def {f : Subarray α} {n : ℕ} :
 @[simp] lemma Subarray.extend_of_le {f : Subarray α} {n : ℕ} (h : f.size ≤ n) : f.extend n = 0 := by
   simp only [extend_def, dite_eq_right_iff, isEmpty_Prop, not_lt, h, IsEmpty.forall_iff]
 
-@[simp] lemma Array.extend_empty (n : ℕ) : (#[] : Array α).extend n = 0 := by
+@[simp] lemma Array.extend_empty : (#[] : Array α).extend = fun _ ↦ 0 := by
+  ext n
   simp only [List.size_toArray, List.length_nil, zero_le, extend_of_le]
 
 /-- Empty subarrays extend to zero -/
-lemma Subarray.extend_empty {f : Subarray α} (e : f.size = 0) (n : ℕ) : f.extend n = 0 := by
+lemma Subarray.extend_empty {f : Subarray α} (e : f.size = 0) : f.extend = fun _ ↦ 0 := by
+  ext n
   simp only [extend_def, e, not_lt_zero', ↓reduceDIte]
 
 @[simp] lemma Array.extend_ofFn {n : ℕ} (f : Fin n → α) (k : ℕ) :
@@ -131,6 +134,14 @@ lemma Array.eq_extend {f : Array α} {n : ℕ} {h : n < f.size} :
 
 lemma Subarray.eq_extend {f : Subarray α} {n : ℕ} {h : n < f.size} :
     f[n]'h = f.extend n := by simp only [extend_of_lt h]
+
+@[simp] lemma Array.extend_take {f : Array α} {n k : ℕ} :
+    (f.take k).extend n = if n < k then f.extend n else 0 := by
+  simp only [take_eq_extract, extend_def, size_extract, tsub_zero, lt_inf_iff, getElem_extract,
+    zero_add]
+  split_ifs with h
+  all_goals try rfl
+  all_goals omega
 
 @[simp] lemma Subarray.extend_take {f : Subarray α} {n k : ℕ} :
     (f.take k).extend n = if n < k then f.extend n else 0 := by
@@ -157,6 +168,17 @@ lemma Subarray.eq_extend {f : Subarray α} {n : ℕ} {h : n < f.size} :
     Array.extend ⟨x :: f⟩ (n + 1) = Array.extend ⟨f⟩ n := by
   simp only [extend_def, List.size_toArray, List.length_cons, add_lt_add_iff_right,
     List.getElem_toArray, List.getElem_cons_succ]
+
+@[simp] lemma Array.extend_extract {f : Array α} {a b n : ℕ} :
+    (f.extract a b).extend n = if n < b - a then f.extend (n + a) else 0 := by
+  simp only [extend_def, size_extract, getElem_extract]
+  split_ifs with h0 h1 h2
+  · simp only [eq_extend, add_comm]
+  · omega
+  · omega
+  · omega
+  · rfl
+  · rfl
 
 end Extend
 
@@ -277,3 +299,25 @@ lemma Subarray.approx_def {f : Subarray α} {f' : Subarray β} :
     approx
 
 end Approx
+
+/-!
+### Take an `ℕ∞` number of terms
+-/
+
+section TakeLt
+
+variable {α : Type}
+
+def Array.takeLt (f : Array α) (n : ℕ∞) : Subarray α :=
+  f.toSubarray (stop := n.min_coe f.size)
+
+@[simp] lemma Array.size_takeLt {f : Array α} {n : ℕ∞} : (f.takeLt n).size = n.min_coe f.size := by
+  simp only [takeLt, size_toSubarray', ENat.min_min_coe_left, tsub_zero]
+
+@[simp] lemma Array.extend_takeLt [Zero α] {f : Array α} {k : ℕ∞} {n : ℕ} :
+    (f.takeLt k).extend n = if n < k then f.extend n else 0 := by
+  simp only [takeLt, extend_toSubarray, tsub_zero, ENat.lt_min_coe_iff, add_zero, extend_def]
+  split_ifs with h
+  all_goals simp_all
+
+end TakeLt

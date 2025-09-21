@@ -98,3 +98,13 @@ lemma series_coeff_mul [CharZero 𝕜] {f g : 𝕜 → 𝕜} {x : 𝕜} {n : ℕ
     · intro i m
       simp only [Finset.mem_antidiagonal] at m
       apply DifferentiableAt.mul <;> differentiable_series_coeff
+
+lemma series_coeff_const {x : 𝕜} {s : E} {n : ℕ} :
+    series_coeff n (fun _ ↦ s) x = if n = 0 then s else 0 := by
+  induction' n with n h generalizing x
+  · simp only [series_coeff, Nat.factorial_zero, Nat.cast_one, inv_one, iteratedDeriv_zero,
+      one_smul, ↓reduceIte]
+  · have e : series_coeff n (fun x ↦ s) (𝕜 := 𝕜) = fun _ ↦ if n = 0 then s else 0 := by
+      ext x; simp only [h]
+    simp only [series_coeff_succ, e, deriv_const', smul_zero, Nat.add_eq_zero, one_ne_zero,
+      and_false, ↓reduceIte]
