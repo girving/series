@@ -1,6 +1,13 @@
+import Series.Analysis.Coeff
+import Series.Analysis.ContDiff
+import Series.Analysis.Newton
+import Series.Analysis.Trunc
+import Series.Analysis.Unique
 import Series.Array
 import Series.List
 import Series.Series.Basic
 import Series.Series.Const
+import Series.Series.Inverse
 import Series.Series.Module
 import Series.Series.Mul
+import Series.Series.Newton

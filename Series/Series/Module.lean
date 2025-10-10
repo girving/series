@@ -62,7 +62,7 @@ lemma smul_def [SMul α β] [Zero β] (s : α) (f : Series β) : s • f = f.smu
 ### Approx instances
 -/
 
-instance [Zero α] [Neg α] [NegZeroClass' α] [Approx α 𝕜] [ApproxNeg α 𝕜] :
+instance instApproxNeg [Zero α] [Neg α] [NegZeroClass' α] [Approx α 𝕜] [ApproxNeg α 𝕜] :
     ApproxNeg (Series α) (𝕜 → 𝕜) where
   approx_neg {f f'} m k lt := by
     simp only [neg_def, neg, order_map, series_coeff, iteratedDeriv_neg, smul_eq_mul,
@@ -72,7 +72,7 @@ instance [Zero α] [Neg α] [NegZeroClass' α] [Approx α 𝕜] [ApproxNeg α �
     rw [getElem_map neg_zero']
     approx
 
-instance [Zero α] [Add α] [AddZeroClass' α] [Approx α 𝕜] [ApproxAdd α 𝕜] :
+instance instApproxAdd [Zero α] [Add α] [AddZeroClass' α] [Approx α 𝕜] [ApproxAdd α 𝕜] :
     ApproxAdd (Series α) (𝕜 → 𝕜) where
   approx_add {f g f' g'} fa ga k lt := by
     simp only [add_def, add, extend_def, lt_min_iff, Array.extend_ofFn, ENat.lt_min_coe_iff,
@@ -89,7 +89,7 @@ instance [Zero α] [Add α] [AddZeroClass' α] [Approx α 𝕜] [ApproxAdd α �
     simp only [iteratedDeriv_add fc gc, smul_add, series_coeff, e]
     exact ⟨fc.add gc, by approx⟩
 
-instance [Zero α] [Neg α] [Sub α] [SubZeroClass α] [Approx α 𝕜] [ApproxSub α 𝕜] :
+instance instApproxSub [Zero α] [Neg α] [Sub α] [SubZeroClass α] [Approx α 𝕜] [ApproxSub α 𝕜] :
     ApproxSub (Series α) (𝕜 → 𝕜) where
   approx_sub {f g f' g'} fa ga k lt := by
     simp only [sub_def, sub, extend_def, lt_min_iff, Array.extend_ofFn, ENat.lt_min_coe_iff,
@@ -106,8 +106,8 @@ instance [Zero α] [Neg α] [Sub α] [SubZeroClass α] [Approx α 𝕜] [ApproxS
     simp only [iteratedDeriv_sub fc gc, smul_sub, series_coeff, e]
     exact ⟨fc.sub gc, by approx⟩
 
-instance [Approx β 𝕜] [Zero β] [SMulZeroClass α β] [Approx α 𝕜] [ApproxSMul α β 𝕜 𝕜] :
-    ApproxSMul α (Series β) 𝕜 (𝕜 → 𝕜) where
+instance instApproxSMul [Approx β 𝕜] [Zero β] [SMulZeroClass α β] [Approx α 𝕜]
+    [ApproxSMul α β 𝕜 𝕜] : ApproxSMul α (Series β) 𝕜 (𝕜 → 𝕜) where
   approx_smul {s f s' f'} sa fa k lt := by
     simp only [smul_def, smul, order_map] at k lt ⊢
     obtain ⟨fc, fa⟩ := fa k lt

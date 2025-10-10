@@ -13,7 +13,7 @@ open Polynomial (C X)
 open Set
 open scoped Polynomial Topology
 
-variable {α β : Type}
+variable {α β 𝕜 : Type}
 
 /-!
 ### Definitions
@@ -159,8 +159,7 @@ variable [CommRing α]
   simp only [gs1, dite_false]
   by_cases fs2 : f.size = 2
   · have g2 : g.size = 2 := by omega
-    simp [fs2, g2, poly_two, mul_add, add_mul, Array.poly, smul_mul_smul, ← pow_two, smul_smul,
-      add_smul]
+    simp [fs2, g2, poly_two, mul_add, add_mul, Array.poly, ← pow_two, smul_smul, add_smul]
     ring_nf
   simp only [fs2, ↓reduceDIte, size_add_helper, size_take]
   -- Replace recursive Karatsuba calls
@@ -423,7 +422,10 @@ end KaratsubaApprox
 
 section Approx
 
-variable {𝕜 : Type} [NontriviallyNormedField 𝕜] [ApproxRing α 𝕜] [CharZero 𝕜]
+variable [Zero α] [Add α] [Sub α] [Mul α] [AddZeroClass' α]
+variable [NontriviallyNormedField 𝕜] [CharZero 𝕜]
+variable [Approx α 𝕜] [ApproxZero α 𝕜] [ApproxZeroIff α 𝕜] [ApproxAdd α 𝕜] [ApproxSub α 𝕜]
+  [ApproxMul α 𝕜]
 
 lemma mul_order_rearrange (fo go : ℕ∞) (fs gs : ℕ) :
     ((min fo go).min_coe ((min fo go).min_coe fs + (min fo go).min_coe gs - 1)) =
@@ -433,6 +435,7 @@ lemma mul_order_rearrange (fo go : ℕ∞) (fs gs : ℕ) :
   all_goals induction' go with go
   all_goals simp; try omega
 
+set_option linter.unusedSectionVars false in
 /-- Exact series multiply as polynomials -/
 lemma Series.exact_mul {f g : Series α} {f' g' : 𝕜 → 𝕜}
     (df : ∀ i : ℕ, i < f.order → ContDiffAt 𝕜 i f' 0)
@@ -477,8 +480,7 @@ lemma Series.exact_mul {f g : Series α} {f' g' : 𝕜 → 𝕜}
       have lt : p.2 < g.order := lt_of_le_of_lt (by simp only [Nat.cast_le]; omega) gi
       rw [g0 _ (h0 lt) lt, mul_zero]
 
-variable [AddZeroClass' α] [ApproxZeroIff α 𝕜]
-
+set_option linter.unusedSectionVars false in
 /-- Series multiplication is conservative, function version -/
 instance Series.instApproxMulFun : ApproxMul (Series α) (𝕜 → 𝕜) where
   approx_mul {f g f' g'} fa ga := by

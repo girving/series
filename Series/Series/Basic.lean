@@ -2,6 +2,7 @@ import Interval.Approx
 import Mathlib.Analysis.Calculus.IteratedDeriv.Defs
 import Series.Array
 import Series.Analysis.Coeff
+import Series.Analysis.Trunc
 import Series.Polynomial
 import Series.ENat
 
@@ -11,7 +12,7 @@ import Series.ENat
 
 open Polynomial (X)
 open Set
-open scoped Polynomial Topology
+open scoped ContDiff Polynomial Topology
 
 variable {α β : Type} [Zero α] [Zero β]
 variable {S : Type} [Semiring S]
@@ -61,6 +62,42 @@ instance instApprox [Approx α E] : Approx (Series α) (𝕜 → E) where
     · exact s
     · simp only [Array.eq_extend, c i lt]
   simp only [e, o]
+
+lemma congr_right [Approx α E] {f : Series α} {g g' : 𝕜 → E} (a : approx f g) {n : ℕ}
+    (e : g' =ˢ[n] g) (le : f.order ≤ n) : approx f g' := by
+  intro i lt
+  obtain ⟨c,a⟩ := a i lt
+  have lt' : i < n := by simpa only [Nat.cast_lt] using lt_of_lt_of_le lt le
+  exact ⟨e.df i lt', e.eq i lt' ▸ a⟩
+
+lemma congr_right_of_eventuallyEq [Approx α E] {f : Series α} {g g' : 𝕜 → E} (a : approx f g)
+    (e : g' =ᶠ[𝓝 0] g) : approx f g' := by
+  intro i lt
+  obtain ⟨c,a⟩ := a i lt
+  exact ⟨c.congr_of_eventuallyEq e, by rwa [e.series_coeff_eq]⟩
+
+lemma extend_of_le {f : Series α} {i : ℕ} (le : f.order ≤ i) : f.extend i = 0 := by
+  rw [extend_def, Array.extend_of_le]
+  simpa only [Nat.cast_le] using le_trans f.le le
+
+lemma contDiffAt_of_approx [Approx α E] {f : Series α} {f' : 𝕜 → E} (a : approx f f')
+    (f0 : f.order ≠ 0) : ContDiffAt 𝕜 (f.order - 1) f' 0 := by
+  simp only [approx] at a
+  generalize f.order = o at a f0
+  induction' o with o
+  · simp only [WithTopENat.infty_sub_one, contDiffAt_infty]
+    intro n
+    exact (a n (by simp)).1
+  · simp only [WithTop.coe_natCast]
+    norm_cast at f0
+    specialize a (o - 1) (by norm_cast; omega)
+    norm_cast
+    exact a.1
+
+lemma approx_of_order_eq_zero [Approx α E] {f : Series α} {f' : 𝕜 → E} (o0 : f.order = 0) :
+    approx f f' := by
+  intro i lt
+  simp only [o0, ENat.not_lt_zero] at lt
 
 /-!
 ### `nan`, the empty series, could be anything
@@ -145,6 +182,43 @@ lemma approx_of_exact [Approx α E] [ApproxZero α E] {f : Series α} {f' : 𝕜
 
 @[simp] lemma order_withOrder (f : Series α) (order : ℕ∞) : (f.withOrder order).order = order := by
   rw [withOrder.eq_def]
+
+@[simp] lemma extend_withOrder (f : Series α) (order : ℕ∞) (i : ℕ) :
+    (f.withOrder order).extend i = if i < order then f.extend i else 0 := by
+  simp only [withOrder, extend_def, Array.extend_take, ENat.lt_min_coe_iff]
+  split_ifs with h0 h1 h2
+  · rfl
+  · simp only [h1, false_and] at h0
+  · simp only [h2, true_and, not_lt] at h0
+    rw [Array.extend_of_le h0]
+  · rfl
+
+lemma approx_withOrder [Approx α E] {f : Series α} {f' : 𝕜 → E} (fa : approx f f') {order : ℕ∞}
+    (le : order ≤ f.order) : approx (f.withOrder order) f' := by
+  intro i lt
+  simp only [order_withOrder] at lt
+  simp only [extend_withOrder, lt, ↓reduceIte]
+  exact fa i (lt_of_lt_of_le lt le)
+
+/-- Zero extensions approximate truncated series -/
+@[approx] lemma approx_withOrder_seriesTrunc [CharZero 𝕜] [Approx α 𝕜] [ApproxZero α 𝕜]
+    {f : Series α} {f' : 𝕜 → 𝕜} (fa : approx f f') {n : ℕ} :
+    approx (f.withOrder n) (seriesTrunc f' (f.order.min_coe n) 0) := by
+  intro i lt
+  simp only [order_withOrder, Nat.cast_lt] at lt
+  refine ⟨by fun_prop, ?_⟩
+  simp only [extend_withOrder, Nat.cast_lt, lt, ↓reduceIte, series_coeff_seriesTrunc,
+    ENat.lt_min_coe_iff, and_true]
+  split_ifs with fi
+  · exact (fa i fi).2
+  · simp only [not_lt] at fi
+    simp only [extend_of_le fi, approx_zero]
+
+/-- Zero extensions approximate truncated series -/
+@[approx] lemma approx_withOrder_seriesTrunc' [CharZero 𝕜] [Approx α 𝕜] [ApproxZero α 𝕜]
+    {f : Series α} {f' : 𝕜 → 𝕜} (fa : approx f f') {n : ℕ} (le : n ≤ f.order) :
+    approx (f.withOrder n) (seriesTrunc f' n 0) := by
+  simpa only [ENat.min_coe_eq_right le] using approx_withOrder_seriesTrunc fa (n := n)
 
 /-!
 ### Map all explicit coefficients

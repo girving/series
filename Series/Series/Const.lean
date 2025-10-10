@@ -55,3 +55,46 @@ instance instApproxOne [One α] [Approx α 𝕜] [ApproxZero α 𝕜] [ApproxOne
   approx_one := by
     simp [one_def, Pi.one_def]
     approx
+
+@[simp] lemma order_const (s : α) : (const s).order = ⊤ := by simp only [const]
+
+/-!
+### Conversion from `ℕ`
+-/
+
+/-- Conversion from `ℕ` values to `Series` -/
+instance [NatCast α] : NatCast (Series α) := ⟨fun n ↦ const (n : α)⟩
+
+/-- Conversion from `ℕ` literals to `Series` -/
+instance {n : ℕ} [n.AtLeastTwo] [NatCast α] : OfNat (Series α) n := ⟨const (n : α)⟩
+
+lemma natCast_def [NatCast α] (n : ℕ) : (n : Series α) = const (n : α) := rfl
+lemma ofNat_def [NatCast α] {n : ℕ} [n.AtLeastTwo] [OfNat α n] :
+    (OfNat.ofNat n : Series α) = const (n : α) := rfl
+
+instance [NatCast α] [NatCast E] [Approx α E] [ApproxZero α E] [ApproxNatCast α E] :
+    ApproxNatCast (Series α) (𝕜 → E) where
+  approx_natCast := by
+    intro n
+    simp only [natCast_def, Pi.natCast_def]
+    apply approx_const
+    approx
+
+@[approx] lemma approx_fun_ofNat {n : ℕ} [n.AtLeastTwo] [NatCast α] [Approx α 𝕜] [ApproxZero α 𝕜]
+    [ApproxNatCast α 𝕜] :
+    approx (no_index (OfNat.ofNat n : Series α)) (fun _ : 𝕜 ↦ no_index (OfNat.ofNat n : 𝕜)) := by
+  apply approx_const
+  simp only [OfNat.ofNat]
+  approx
+
+@[approx] lemma approx_ofNat {n : ℕ} [n.AtLeastTwo] [NatCast α] [Approx α 𝕜] [ApproxZero α 𝕜]
+    [ApproxNatCast α 𝕜] :
+    approx (no_index (OfNat.ofNat n : Series α)) (no_index (OfNat.ofNat n : 𝕜 → 𝕜)) := by
+  apply approx_fun_ofNat
+
+@[simp] lemma order_natCast {n : ℕ} [NatCast α] : (n : Series α).order = ⊤ := by
+  simp only [natCast_def, order_const]
+
+@[simp] lemma order_ofNat {n : ℕ} [n.AtLeastTwo] [NatCast α] :
+    (no_index (OfNat.ofNat n : Series α)).order = ⊤ := by
+  simp only [ofNat_def, order_const]
