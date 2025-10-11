@@ -19,11 +19,7 @@ generality.
 open Set
 open scoped ContDiff Topology
 
-variable {𝕜 : Type} [RCLike 𝕜]
-variable {α : Type} [Zero α] [Neg α] [Add α] [Sub α] [Mul α] [NatCast α] [AddZeroClass' α]
-  [SubZeroClass α]
-variable [Approx α 𝕜] [ApproxZero α 𝕜] [ApproxZeroIff α 𝕜] [ApproxAdd α 𝕜] [ApproxSub α 𝕜]
-  [ApproxMul α 𝕜] [ApproxNatCast α 𝕜]
+variable {α 𝕜 : Type} [RCLike 𝕜] [ApproxSeries α 𝕜]
 
 /-- Newton iteration for series inversion -/
 def inv_newton (y : Series α) (i : α) : Newton α where

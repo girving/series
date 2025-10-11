@@ -1,4 +1,5 @@
 import Interval.Approx
+import Interval.Unbundled
 import Mathlib.Analysis.Calculus.IteratedDeriv.Defs
 import Series.Array
 import Series.Analysis.Coeff
@@ -32,6 +33,11 @@ structure Series (α : Type) [Zero α] : Type where
   order : ℕ∞
   /-- We don't have any meaningless explicit coefficients -/
   le : c.size ≤ order
+
+/-- Typeclass that pulls in everything we need for ring operations -/
+class ApproxSeries (α 𝕜 : Type) [NontriviallyNormedField 𝕜] extends Zero α, Neg α, Add α, Sub α,
+  Mul α, NatCast α, AddZeroClass' α, SubZeroClass α, Approx α 𝕜, ApproxZero α 𝕜, ApproxZeroIff α 𝕜,
+  ApproxAdd α 𝕜, ApproxSub α 𝕜, ApproxMul α 𝕜, ApproxNatCast α 𝕜 where
 
 namespace Series
 

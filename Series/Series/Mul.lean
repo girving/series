@@ -422,10 +422,7 @@ end KaratsubaApprox
 
 section Approx
 
-variable [Zero α] [Add α] [Sub α] [Mul α] [AddZeroClass' α]
-variable [NontriviallyNormedField 𝕜] [CharZero 𝕜]
-variable [Approx α 𝕜] [ApproxZero α 𝕜] [ApproxZeroIff α 𝕜] [ApproxAdd α 𝕜] [ApproxSub α 𝕜]
-  [ApproxMul α 𝕜]
+variable [NontriviallyNormedField 𝕜] [CharZero 𝕜] [ApproxSeries α 𝕜]
 
 lemma mul_order_rearrange (fo go : ℕ∞) (fs gs : ℕ) :
     ((min fo go).min_coe ((min fo go).min_coe fs + (min fo go).min_coe gs - 1)) =
@@ -435,7 +432,6 @@ lemma mul_order_rearrange (fo go : ℕ∞) (fs gs : ℕ) :
   all_goals induction' go with go
   all_goals simp; try omega
 
-set_option linter.unusedSectionVars false in
 /-- Exact series multiply as polynomials -/
 lemma Series.exact_mul {f g : Series α} {f' g' : 𝕜 → 𝕜}
     (df : ∀ i : ℕ, i < f.order → ContDiffAt 𝕜 i f' 0)
@@ -480,7 +476,6 @@ lemma Series.exact_mul {f g : Series α} {f' g' : 𝕜 → 𝕜}
       have lt : p.2 < g.order := lt_of_le_of_lt (by simp only [Nat.cast_le]; omega) gi
       rw [g0 _ (h0 lt) lt, mul_zero]
 
-set_option linter.unusedSectionVars false in
 /-- Series multiplication is conservative, function version -/
 instance Series.instApproxMulFun : ApproxMul (Series α) (𝕜 → 𝕜) where
   approx_mul {f g f' g'} fa ga := by
