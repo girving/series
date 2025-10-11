@@ -174,6 +174,11 @@ lemma iteratedDeriv_mul_const {f : 𝕜 → 𝕜} {c : 𝕜} {a : 𝕜} {n : ℕ
       ext y; apply h
     rw [iteratedDeriv_succ, e, deriv_mul_const_field, ← iteratedDeriv_succ]
 
+/-- Note that this requires the multiplier to be a field element, to avoid zero divisors -/
+lemma iteratedDeriv_const_mul' {f : 𝕜 → 𝕜} {c : 𝕜} {a : 𝕜} {n : ℕ} :
+    iteratedDeriv n (fun x ↦ a * f x) c = a * iteratedDeriv n f c := by
+  simp only [mul_comm a, iteratedDeriv_mul_const]
+
 lemma iteratedDeriv_monomial {x c : 𝕜} {n p : ℕ} :
     iteratedDeriv n (fun x ↦ (x - c) ^ p) x = p.descFactorial n * (x - c) ^ (p - n) := by
   induction' n with n h generalizing x

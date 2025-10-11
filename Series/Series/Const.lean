@@ -57,6 +57,11 @@ instance instApproxOne [One α] [Approx α 𝕜] [ApproxZero α 𝕜] [ApproxOne
     approx
 
 @[simp] lemma order_const (s : α) : (const s).order = ⊤ := by simp only [const]
+@[simp] lemma size_const (s : α) : (const s).c.size = 1 := by simp [const]
+@[simp] lemma order_zero : (0 : Series α).order = ⊤ := by simp only [zero_def, order_const]
+@[simp] lemma size_zero : (0 : Series α).c.size = 1 := by simp only [zero_def, size_const]
+@[simp] lemma order_one [One α] : (1 : Series α).order = ⊤ := by simp only [one_def, order_const]
+@[simp] lemma size_one [One α] : (1 : Series α).c.size = 1 := by simp only [one_def, size_const]
 
 /-!
 ### Conversion from `ℕ`
@@ -98,3 +103,10 @@ instance [NatCast α] [NatCast E] [Approx α E] [ApproxZero α E] [ApproxNatCast
 @[simp] lemma order_ofNat {n : ℕ} [n.AtLeastTwo] [NatCast α] :
     (no_index (OfNat.ofNat n : Series α)).order = ⊤ := by
   simp only [ofNat_def, order_const]
+
+@[simp] lemma size_natCast {n : ℕ} [NatCast α] : (n : Series α).c.size = 1 := by
+  simp only [natCast_def, size_const]
+
+@[simp] lemma size_ofNat {n : ℕ} [n.AtLeastTwo] [NatCast α] :
+    (no_index (OfNat.ofNat n : Series α)).c.size = 1 := by
+  simp only [ofNat_def, size_const]

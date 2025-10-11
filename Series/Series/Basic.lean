@@ -34,10 +34,14 @@ structure Series (α : Type) [Zero α] : Type where
   /-- We don't have any meaningless explicit coefficients -/
   le : c.size ≤ order
 
-/-- Typeclass that pulls in everything we need for ring operations -/
-class ApproxSeries (α 𝕜 : Type) [NontriviallyNormedField 𝕜] extends Zero α, Neg α, Add α, Sub α,
-  Mul α, NatCast α, AddZeroClass' α, SubZeroClass α, Approx α 𝕜, ApproxZero α 𝕜, ApproxZeroIff α 𝕜,
-  ApproxAdd α 𝕜, ApproxSub α 𝕜, ApproxMul α 𝕜, ApproxNatCast α 𝕜 where
+/-- Typeclass that pulls in everything we need to define ring operations -/
+class SeriesScalar (α : Type) extends Zero α, One α, Neg α, Add α,
+  Sub α, Mul α, NatCast α, AddZeroClass' α, SubZeroClass α where
+
+/-- Typeclass that pulls in everything we need for ring operations to be conservative -/
+class ApproxSeries (α 𝕜 : Type) [SeriesScalar α] [NontriviallyNormedField 𝕜] extends Approx α 𝕜,
+  ApproxZero α 𝕜, ApproxOne α 𝕜, ApproxZeroIff α 𝕜, ApproxAdd α 𝕜, ApproxSub α 𝕜, ApproxMul α 𝕜,
+  ApproxNatCast α 𝕜 where
 
 namespace Series
 
@@ -236,7 +240,10 @@ lemma approx_withOrder [Approx α E] {f : Series α} {f' : 𝕜 → E} (fa : app
 @[simp] lemma order_map (f : α → β) (g : Series α) : (g.map f).order = g.order := by
   simp only [map]
 
-lemma getElem_map {f : α → β} {g : Series α} {n : ℕ} (f0 : f 0 = 0) :
+@[simp] lemma size_map (f : α → β) (g : Series α) : (g.map f).c.size = g.c.size := by
+  simp only [map, Array.size_map]
+
+lemma extend_map {f : α → β} {g : Series α} {n : ℕ} (f0 : f 0 = 0) :
     (g.map f).extend n = f (g.extend n) := by
   simp only [f0, map, extend_def, Array.extend_def, Array.size_map, Array.getElem_map, apply_dite f]
 

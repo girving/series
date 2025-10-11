@@ -103,6 +103,12 @@ lemma Filter.EventuallyEq.series_coeff_eq {f g : 𝕜 → E} {x : 𝕜} {n : ℕ
     series_coeff n f x = series_coeff n g x := by
   simp only [series_coeff, e.iteratedDeriv_eq]
 
+/-- `series_coeff` commutes with scalar multiplication -/
+@[simp] lemma series_coeff_const_mul {f : 𝕜 → 𝕜} {x : 𝕜} {n : ℕ} {s : 𝕜} :
+    series_coeff n (fun x ↦ s * f x) x = s * series_coeff n f x := by
+  simp only [series_coeff, iteratedDeriv_const_mul', smul_eq_mul]
+  ring
+
 /-!
 ### Machinery and notation for low-order series equality
 -/

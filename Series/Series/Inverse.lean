@@ -19,7 +19,7 @@ generality.
 open Set
 open scoped ContDiff Topology
 
-variable {α 𝕜 : Type} [RCLike 𝕜] [ApproxSeries α 𝕜]
+variable {α 𝕜 : Type} [SeriesScalar α] [RCLike 𝕜] [ApproxSeries α 𝕜]
 
 /-- Newton iteration for series inversion -/
 def inv_newton (y : Series α) (i : α) : Newton α where
@@ -80,3 +80,7 @@ lemma Series.approx_inv {y : Series α} {y' : 𝕜 → 𝕜} {i : α} (ay : appr
   · exact dyi
   · simp only [Pi.inv_apply, div_inv_eq_mul, one_mul]
     exact SeriesEq.refl dy'
+
+@[simp] lemma Series.order_inv (y : Series α) (i : α) : (y.inv i).order = y.order.toNat := by
+  rw [inv, Newton.order_solve]
+  simp only [inv_newton, ENat.coe_toNat_le_self]

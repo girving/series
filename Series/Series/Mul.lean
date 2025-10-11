@@ -422,7 +422,7 @@ end KaratsubaApprox
 
 section Approx
 
-variable [NontriviallyNormedField 𝕜] [CharZero 𝕜] [ApproxSeries α 𝕜]
+variable [NontriviallyNormedField 𝕜] [CharZero 𝕜] [SeriesScalar α]
 
 lemma mul_order_rearrange (fo go : ℕ∞) (fs gs : ℕ) :
     ((min fo go).min_coe ((min fo go).min_coe fs + (min fo go).min_coe gs - 1)) =
@@ -477,7 +477,7 @@ lemma Series.exact_mul {f g : Series α} {f' g' : 𝕜 → 𝕜}
       rw [g0 _ (h0 lt) lt, mul_zero]
 
 /-- Series multiplication is conservative, function version -/
-instance Series.instApproxMulFun : ApproxMul (Series α) (𝕜 → 𝕜) where
+instance Series.instApproxMulFun [ApproxSeries α 𝕜] : ApproxMul (Series α) (𝕜 → 𝕜) where
   approx_mul {f g f' g'} fa ga := by
     apply approx_of_exact
     · intro i lt

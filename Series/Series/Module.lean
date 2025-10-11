@@ -69,7 +69,7 @@ instance instApproxNeg [Zero α] [Neg α] [NegZeroClass' α] [Approx α 𝕜] [A
       mul_neg] at k lt ⊢
     obtain ⟨c, a⟩ := m k lt
     refine ⟨c.neg, ?_⟩
-    rw [getElem_map neg_zero']
+    rw [extend_map neg_zero']
     approx
 
 instance instApproxAdd [Zero α] [Add α] [AddZeroClass' α] [Approx α 𝕜] [ApproxAdd α 𝕜] :
@@ -113,5 +113,5 @@ instance instApproxSMul [Approx β 𝕜] [Zero β] [SMulZeroClass α β] [Approx
     obtain ⟨fc, fa⟩ := fa k lt
     simp only [iteratedDeriv_const_smul fc, smul_comm _ s, series_coeff]
     refine ⟨fc.const_smul s, ?_⟩
-    rw [getElem_map (smul_zero _)]
+    rw [extend_map (smul_zero _)]
     approx

@@ -7,7 +7,10 @@ import Series.Array
 import Series.List
 import Series.Series.Basic
 import Series.Series.Const
+import Series.Series.Div2
 import Series.Series.Inverse
 import Series.Series.Module
 import Series.Series.Mul
 import Series.Series.Newton
+import Series.Series.Sqrt
+import Series.Sqrt
