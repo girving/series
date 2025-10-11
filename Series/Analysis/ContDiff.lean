@@ -9,7 +9,7 @@ import Mathlib.Analysis.RCLike.TangentCone
 import Mathlib.MeasureTheory.Function.SpecialFunctions.RCLike
 import Mathlib.MeasureTheory.Integral.IntervalIntegral.Basic
 import Mathlib.MeasureTheory.Integral.IntervalIntegral.FundThmCalculus
-import Series.Bound
+import Series.Misc.Bound
 
 /-!
 # Continuous differentiability facts

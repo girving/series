@@ -1,6 +1,6 @@
 import Series.Series.Div2
 import Series.Series.Inverse
-import Series.Sqrt
+import Series.Misc.Sqrt
 
 /-!
 # Power series square roots using Newton's method

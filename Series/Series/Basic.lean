@@ -1,11 +1,11 @@
 import Interval.Approx
 import Interval.Unbundled
 import Mathlib.Analysis.Calculus.IteratedDeriv.Defs
-import Series.Array
 import Series.Analysis.Coeff
 import Series.Analysis.Trunc
-import Series.Polynomial
-import Series.ENat
+import Series.Misc.Array
+import Series.Misc.Polynomial
+import Series.Misc.ENat
 
 /-!
 # Efficient truncated formal power series computations

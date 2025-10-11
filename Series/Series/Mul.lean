@@ -1,5 +1,5 @@
 import Interval.Unbundled
-import Series.Pi
+import Series.Misc.Pi
 import Series.Series.Basic
 
 /-!

@@ -2,8 +2,8 @@ import Mathlib.Algebra.BigOperators.Group.Finset.Basic
 import Mathlib.Algebra.Order.Ring.Nat
 import Mathlib.Algebra.Order.Sub.Basic
 import Interval.Approx
-import Series.ENat
-import Series.List
+import Series.Misc.ENat
+import Series.Misc.List
 
 /-!
 # Array facts

@@ -3,8 +3,9 @@ import Series.Analysis.ContDiff
 import Series.Analysis.Newton
 import Series.Analysis.Trunc
 import Series.Analysis.Unique
-import Series.Array
-import Series.List
+import Series.Misc.Array
+import Series.Misc.List
+import Series.Misc.Sqrt
 import Series.Series.Basic
 import Series.Series.Const
 import Series.Series.Div2
@@ -13,4 +14,3 @@ import Series.Series.Module
 import Series.Series.Mul
 import Series.Series.Newton
 import Series.Series.Sqrt
-import Series.Sqrt

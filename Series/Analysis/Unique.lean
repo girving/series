@@ -1,6 +1,6 @@
 import Mathlib.Analysis.Calculus.Deriv.Prod
 import Series.Analysis.Coeff
-import Series.ENat
+import Series.Misc.ENat
 
 /-!
 # Nondegenerate power series equations have unique solutions

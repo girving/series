@@ -2,7 +2,7 @@ import Mathlib.Algebra.Polynomial.Coeff
 import Mathlib.Algebra.Polynomial.Degree.Definitions
 import Mathlib.Algebra.Polynomial.Div
 import Mathlib.GroupTheory.GroupAction.Ring
-import Series.Array
+import Series.Misc.Array
 
 /-!
 # Polynomial facts
