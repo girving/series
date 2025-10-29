@@ -1,6 +1,8 @@
 import Series.Analysis.Coeff
 import Series.Analysis.ContDiff
 import Series.Analysis.Newton
+import Series.Analysis.RCLike
+import Series.Analysis.Small
 import Series.Analysis.Trunc
 import Series.Analysis.Unique
 import Series.Misc.Array
