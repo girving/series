@@ -1,5 +1,6 @@
 import Mathlib.Analysis.Calculus.ContDiff.Defs
 import Mathlib.Data.ENat.Lattice
+import Mathlib.Tactic.Cases
 
 /-!
 # ENat machinery: computable defs and lemmas

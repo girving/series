@@ -13,6 +13,7 @@ scope = "leanprover-community"
 [[require]]
 name = "interval"
 scope = "girving"
+rev = "broken"
 
 [[lean_lib]]
 name = "Series"

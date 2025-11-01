@@ -9,6 +9,7 @@ import Mathlib.Analysis.RCLike.TangentCone
 import Mathlib.MeasureTheory.Function.SpecialFunctions.RCLike
 import Mathlib.MeasureTheory.Integral.IntervalIntegral.Basic
 import Mathlib.MeasureTheory.Integral.IntervalIntegral.FundThmCalculus
+import Mathlib.Tactic.Cases
 import Series.Misc.Bound
 
 /-!
