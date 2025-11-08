@@ -200,6 +200,10 @@ lemma iteratedDeriv_monomial {x c : 𝕜} {n p : ℕ} :
       ring
     · fun_prop
 
+lemma iteratedDeriv_monomial' {x : 𝕜} {n p : ℕ} :
+    iteratedDeriv n (fun x ↦ x ^ p) x = p.descFactorial n * x ^ (p - n) := by
+  simpa using iteratedDeriv_monomial (c := 0) (x := x) (n := n) (p := p)
+
 lemma hasDerivAt_iteratedDeriv {f : 𝕜 → E} {x : 𝕜} {n : ℕ} {m : WithTop ℕ∞}
     (df : ContDiffAt 𝕜 m f x) (le : n + 1 ≤ m) :
     HasDerivAt (iteratedDeriv n f) (iteratedDeriv (n + 1) f x) x := by

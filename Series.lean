@@ -15,4 +15,5 @@ import Series.Series.Inverse
 import Series.Series.Module
 import Series.Series.Mul
 import Series.Series.Newton
+import Series.Series.Shift
 import Series.Series.Sqrt

@@ -109,6 +109,14 @@ lemma Filter.EventuallyEq.series_coeff_eq {f g : 𝕜 → E} {x : 𝕜} {n : ℕ
   simp only [series_coeff, iteratedDeriv_const_mul', smul_eq_mul]
   ring
 
+@[simp] lemma series_coeff_monomial [CharZero 𝕜] {n k : ℕ} :
+    series_coeff k (fun z : 𝕜 ↦ z ^ n) 0 = if k = n then 1 else 0 := by
+  simp only [series_coeff, iteratedDeriv_monomial', smul_eq_mul]
+  split_ifs with kn
+  · simp [kn, Nat.descFactorial_self, Nat.factorial_ne_zero]
+  · simp
+    omega
+
 /-!
 ### Machinery and notation for low-order series equality
 -/
