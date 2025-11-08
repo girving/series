@@ -62,6 +62,9 @@ instance instApproxOne [One α] [Approx α 𝕜] [ApproxZero α 𝕜] [ApproxOne
 @[simp] lemma size_zero : (0 : Series α).c.size = 1 := by simp only [zero_def, size_const]
 @[simp] lemma order_one [One α] : (1 : Series α).order = ⊤ := by simp only [one_def, order_const]
 @[simp] lemma size_one [One α] : (1 : Series α).c.size = 1 := by simp only [one_def, size_const]
+lemma extend_zero (i : ℕ) : (0 : Series α).extend i = 0 := by simp [zero_def, extend_const]
+lemma extend_one [One α] (i : ℕ) : (1 : Series α).extend i = if i = 0 then 1 else 0 := by
+  simp only [one_def, extend_const]
 
 /-!
 ### Conversion from `ℕ`
