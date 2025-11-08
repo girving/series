@@ -68,3 +68,9 @@ lemma series_coeff_shift {f : 𝕜 → 𝕜} {m n k : ℕ} (fc : ContDiffAt 𝕜
     split_ifs with ni
     · simp only [approx_zero]
     · exact c.2
+
+/-- Series shift nicely approximates `z ^ n` -/
+@[approx] lemma Series.approx_one_shift (n : ℕ) :
+    approx ((1 : Series α) <<< n) (fun z : 𝕜 ↦ z ^ n) := by
+  simpa only [mul_one] using Series.approx_shift (𝕜 := 𝕜)
+    (f := (1 : Series α)) (f' := fun z ↦ 1) approx_one n

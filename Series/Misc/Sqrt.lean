@@ -1,5 +1,6 @@
 import Mathlib.Analysis.SpecialFunctions.Complex.LogDeriv
 import Mathlib.Analysis.SpecialFunctions.Pow.Complex
+import Mathlib.Analysis.SpecialFunctions.Pow.Deriv
 
 /-!
 # The principle branch of the complex square root
@@ -43,3 +44,10 @@ lemma ContDiffAt.csqrt (m : z ∈ slitPlane) {n : WithTop ℕ∞} : ContDiffAt �
 /-- In the right halfplane, `sqrt (z ^ 2) = z` -/
 lemma Complex.sqrt_sq (r : 0 < z.re) : (z ^ 2).sqrt = z := by
   simp only [Complex.sqrt_eq_cpow, Complex.sq_cpow_two_inv r]
+
+lemma HasDerivAt.csqrt {f : ℂ → ℂ} {f' z : ℂ} (m : f z ∈ Complex.slitPlane)
+    (df : HasDerivAt f f' z) : HasDerivAt (fun z : ℂ ↦ (f z).sqrt) (f' / (2 * (f z).sqrt)) z := by
+  simp only [Complex.sqrt_eq_cpow]
+  apply (HasDerivAt.cpow_const (c := 2⁻¹) df m).congr_deriv
+  field_simp
+  norm_num [Complex.cpow_neg, div_eq_inv_mul]

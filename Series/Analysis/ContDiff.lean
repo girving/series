@@ -38,6 +38,9 @@ variable {E : Type} [NormedAddCommGroup E] [NormedSpace 𝕜 E]
 variable {F : Type} [NormedAddCommGroup F] [NormedSpace 𝕜 F]
 variable {G : Type} [NormedAddCommGroup G] [NormedSpace 𝕜 G]
 
+lemma hasDerivAt_const_mul {x : 𝕜} (c : 𝕜) : HasDerivAt (fun (x : 𝕜) => c * x) c x := by
+  simpa only [mul_one] using (hasDerivAt_id' x).const_mul c
+
 lemma iteratedDeriv_const {n : ℕ} {x : 𝕜} {c : F} :
     iteratedDeriv n (fun _ ↦ c) x = if n = 0 then c else 0 := by
   induction' n with n h generalizing c
