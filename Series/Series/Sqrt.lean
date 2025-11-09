@@ -95,3 +95,7 @@ lemma Series.approx_sqrt {y : Series α} {y' : ℂ → ℂ} (ay : approx y y')
     simp only [y0, Complex.one_mem_slitPlane]
   · simp only [Function.comp_apply, Complex.sq_sqrt]
     exact SeriesEq.refl dy'
+
+omit [ApproxSeries α ℂ] [ApproxDiv2 α ℂ] in
+@[simp] lemma Series.order_sqrt (p : Series α) : (p.sqrt).order = p.order.toNat := by
+  simp only [sqrt, sqrt_newton, le_refl, Newton.order_solve]
