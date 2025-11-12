@@ -1,4 +1,4 @@
-import Interval.Approx
+import Interval.Approx.Approx
 
 /-!
 # Approx instances for functions

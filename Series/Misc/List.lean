@@ -1,4 +1,4 @@
-import Interval.Approx
+import Interval.Approx.Approx
 import Mathlib.Algebra.Order.Ring.Nat
 import Mathlib.Data.List.Forall2
 import Mathlib.Tactic.Cases

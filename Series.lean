@@ -11,9 +11,12 @@ import Series.Misc.Sqrt
 import Series.Series.Basic
 import Series.Series.Const
 import Series.Series.Div2
+import Series.Series.Dyadic
 import Series.Series.Inverse
 import Series.Series.Module
 import Series.Series.Mul
 import Series.Series.Newton
+import Series.Series.Rat
 import Series.Series.Shift
 import Series.Series.Sqrt
+import Series.Series.Sum

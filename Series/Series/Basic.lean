@@ -1,4 +1,4 @@
-import Interval.Approx
+import Interval.Approx.Approx
 import Interval.Unbundled
 import Mathlib.Analysis.Calculus.IteratedDeriv.Defs
 import Series.Analysis.Coeff
