@@ -70,7 +70,7 @@ def Subarray.karatsuba (f g : Subarray α) (n : ℕ) (fn : f.size = n) (gn : g.s
 @[irreducible] def Series.mul (f g : Series α) : Series α :=
   let order := min f.order g.order
   let p := (f.c.takeLt order).karatsuba' (g.c.takeLt order)
-  ⟨p.take (order.min_coe p.size), order, by simp⟩
+  ⟨p.take (min order p.size), order, by simp⟩
 
 /-- Karatsuba multiplication of `Series` -/
 instance Series.instMul : Mul (Series α) where
@@ -100,18 +100,15 @@ lemma Series.mul_def (f g : Series α) : f * g = f.mul g := rfl
 
 lemma Series.size_mul {f g : Series α} :
     (f * g).c.size = if f.c.size = 0 ∨ g.c.size = 0 then 0 else
-      (min f.order g.order).min_coe (f.c.size + g.c.size - 1) := by
-  simp only [mul_def, mul, Subarray.size_karatsuba', tsub_zero, ENat.min_coe_eq_zero_iff,
-    Array.size_eq_zero_iff, Array.take_eq_extract, Array.size_extract, ENat.min_min_coe_right,
+      min (min f.order g.order) (f.c.size + g.c.size - 1) := by
+  simp only [mul_def, mul, Subarray.size_karatsuba', tsub_zero,
+    Array.size_eq_zero_iff, Array.take_eq_extract, Array.size_extract,
     Array.size_takeLt]
   generalize min f.order g.order = o
   split_ifs with h
   all_goals simp_all
-  induction' o with o
-  · simp only [ENat.top_min_coe]
-  · simp only [Nat.cast_eq_zero, ← Array.size_eq_zero_iff] at h
-    simp only [ENat.coe_min_coe]
-    omega
+  simp only [← Array.size_eq_zero_iff] at h
+  omega
 
 @[simp] lemma Subarray.karatsuba'_empty {f g : Subarray α} (g0 : g.size = 0) :
     f.karatsuba' g = #[] := by
@@ -279,9 +276,9 @@ lemma Subarray.extend_karatsuba' : (f.karatsuba' g).extend = (f.poly * g.poly).c
     (f * g).poly = (f.poly * g.poly).trunc (min f.order g.order) := by
   rw [mul_def, mul, Series.poly]
   simp only
-  simp only [Subarray.size_karatsuba', Array.size_takeLt, ENat.min_coe_eq_zero_iff,
-    Array.size_eq_zero_iff, Array.take_eq_extract, Array.poly_take, Subarray.poly_karatsuba',
-    Array.poly_takeLt]
+  simp only [Subarray.size_karatsuba', Array.size_takeLt, ENat.coe_min_coe, Nat.min_assoc,
+    Nat.min_eq_zero_iff, Array.size_eq_zero_iff, Array.take_eq_extract, Array.poly_take,
+    Subarray.poly_karatsuba', Array.poly_takeLt, ENat.min_coe_coe]
   repeat rw [Array.size_takeLt]
   generalize horder : min f.order g.order = order
   by_cases o0 : order = 0; · simp [o0]
@@ -291,45 +288,34 @@ lemma Subarray.extend_karatsuba' : (f.karatsuba' g).extend = (f.poly * g.poly).c
   by_cases g0 : g.c.size = 0
   · simp only [Array.size_eq_zero_iff] at g0
     simp [g0, Series.poly]
-  have e : order.min_coe (order.min_coe f.c.size + order.min_coe g.c.size - 1) =
-      order.min_coe (f.c.size + g.c.size - 1) := by
-    induction' order with o
-    · simp only [ENat.top_min_coe]
-    · simp only [ENat.coe_min_coe]; omega
+  have e : min order (min order f.c.size + min order g.c.size - 1) =
+      min order (f.c.size + g.c.size - 1) := by omega
   split_ifs with h
-  · simp only [ENat.min_coe_eq_zero_iff, f0, or_false, g0, or_self] at h
-    simp only [h, Polynomial.trunc_zero, mul_zero, ENat.min_coe_zero, pow_zero,
-      Polynomial.modByMonic_one]
-  simp only [e]
+  · simp only [ENat.coe_min_coe, Nat.min_eq_zero_iff, f0, or_false, g0, or_self] at h
+    simp only [h, CharP.cast_eq_zero, Polynomial.trunc_zero, mul_zero, zero_le, inf_of_le_right,
+      pow_zero, Polynomial.modByMonic_one]
   ext i
   by_cases h : i < order
-  · simp only [Polynomial.coeff_modByMnnic_X_pow, ENat.lt_min_coe_iff, h, true_and, if_true,
-      Polynomial.coeff_mul, Polynomial.coeff_trunc, mul_ite, ite_mul, zero_mul, mul_zero]
+  · simp only [Polynomial.coeff_modByMnnic_X_pow, lt_min_iff, Polynomial.coeff_mul,
+    Polynomial.coeff_trunc, mul_ite, ite_mul, zero_mul, mul_zero, Nat.cast_lt, h, ↓reduceIte]
     split_ifs with lt
     · refine Finset.sum_congr rfl fun ⟨a,b⟩ m ↦ ?_
-      simp only [Finset.mem_antidiagonal] at m
-      simp only [← Array.extend_eq_coeff_poly, poly]
       have fle := f.le
       have gle := g.le
-      split_ifs with h0 h1
-      · rfl
-      · simp only [not_lt] at h1
-        have bad : (i : ℕ∞) < a := by order
-        rw [Nat.cast_lt] at bad
-        omega
-      · simp only [not_lt] at h0
-        have bad : (i : ℕ∞) < b := by order
-        rw [Nat.cast_lt] at bad
-        omega
+      aesop (add safe tactic (by omega))
     · symm
       refine Finset.sum_eq_zero fun ⟨a,b⟩ m ↦ ?_
       simp only [Finset.mem_antidiagonal] at m
-      simp only [← Array.extend_eq_coeff_poly, poly]
+      simp only [not_and, not_lt, tsub_le_iff_right] at lt
+      simp only [← Array.extend_eq_coeff_poly, Series.poly]
       have le : f.c.size ≤ a ∨ g.c.size ≤ b := by omega
       rcases le with le | le
       all_goals simp only [Array.extend_of_le le, zero_mul, mul_zero]
-  · simp only [Polynomial.coeff_modByMnnic_X_pow, ENat.lt_min_coe_iff, h, false_and, ↓reduceIte,
-      Polynomial.coeff_trunc]
+  · simp only [Polynomial.coeff_modByMnnic_X_pow, lt_inf_iff, Polynomial.coeff_trunc, Nat.cast_lt,
+      h, ↓reduceIte, ite_eq_right_iff, and_imp]
+    intro i0 i1
+    simp only [← horder, lt_inf_iff, not_and, not_lt] at h
+    omega
 
 end Exact
 
@@ -424,13 +410,10 @@ section Approx
 
 variable [NontriviallyNormedField 𝕜] [CharZero 𝕜] [SeriesScalar α]
 
-lemma mul_order_rearrange (fo go : ℕ∞) (fs gs : ℕ) :
-    ((min fo go).min_coe ((min fo go).min_coe fs + (min fo go).min_coe gs - 1)) =
-      ((min fo go).min_coe ((min fo go).min_coe (fo.min_coe fs) +
-                            (min fo go).min_coe (go.min_coe gs) - 1)) := by
-  all_goals induction' fo with fo
-  all_goals induction' go with go
-  all_goals simp; try omega
+lemma mul_order_rearrange (fo go : ℕ) (fs gs : ℕ) :
+    (min (min fo go) (min (min fo go) fs + min (min fo go) gs - 1)) =
+      (min (min fo go) (min (min fo go) (min fo fs) + min (min fo go) (min go gs) - 1)) := by
+  omega
 
 /-- Exact series multiply as polynomials -/
 lemma Series.exact_mul {f g : Series α} {f' g' : 𝕜 → 𝕜}
@@ -443,7 +426,7 @@ lemma Series.exact_mul {f g : Series α} {f' g' : 𝕜 → 𝕜}
   simp only [order_mul]
   ext i lt
   · simp only [order_exact, order_mul]
-  · simp only [size_mul, Array.size_eq_zero_iff, size_exact, ENat.min_coe_eq_zero_iff, order_exact]
+  · simp only [size_mul, Array.size_eq_zero_iff, size_exact, Nat.min_eq_zero_iff, order_exact]
     split_ifs with h0 h1 h2
     · aesop
     · aesop
@@ -456,24 +439,24 @@ lemma Series.exact_mul {f g : Series α} {f' g' : 𝕜 → 𝕜}
       all_goals induction' go with go
       all_goals simp at fle gle ⊢
       all_goals omega
-  · simp only [size_mul, size_exact, ENat.lt_min_coe_iff, lt_inf_iff,
+  · simp only [size_mul, size_exact, lt_min_iff,
       apply_ite (f := fun x ↦ i < x), not_lt_zero', if_false_left, not_or] at lt
     obtain ⟨⟨fi,gi⟩,⟨fs0,gs0⟩,_,lt⟩ := lt
     simp only [exact, Array.extend_eq_coeff_poly, ← poly_def, poly_mul, Polynomial.coeff_trunc,
-      lt_inf_iff, fi, gi, and_self, ↓reduceIte, Polynomial.coeff_mul]
+      lt_inf_iff, Polynomial.coeff_mul]
     simp only [← Array.extend_eq_coeff_poly, Array.size_ofFn, size_mul, fs0, gs0, or_self,
-      ↓reduceIte, ENat.lt_min_coe_iff, lt_inf_iff, fi, gi, and_self, lt, Array.extend_of_lt,
+      ↓reduceIte, lt_min_iff, fi, gi, and_self, lt, Array.extend_of_lt,
       Array.getElem_ofFn, series_coeff_mul (df i fi) (dg i gi), poly_def, Array.extend_ofFn,
-      dite_eq_ite, mul_ite, ite_mul, zero_mul, mul_zero]
+      dite_eq_ite, mul_ite, ite_mul, zero_mul, mul_zero, Nat.cast_lt]
     refine Finset.sum_congr rfl fun p m ↦ ?_
     simp only [Finset.mem_antidiagonal] at m
     split_ifs with h0 h1
     · rfl
     · simp only [not_and, not_lt] at h1
-      have lt : p.1 < f.order := lt_of_le_of_lt (by simp only [Nat.cast_le]; omega) fi
+      have lt : p.1 < f.order := lt_of_le_of_lt (by omega) fi
       rw [f0 _ (h1 lt) lt, zero_mul]
     · simp only [not_and, not_lt] at h0
-      have lt : p.2 < g.order := lt_of_le_of_lt (by simp only [Nat.cast_le]; omega) gi
+      have lt : p.2 < g.order := lt_of_le_of_lt (by omega) gi
       rw [g0 _ (h0 lt) lt, mul_zero]
 
 /-- Series multiplication is conservative, function version -/
@@ -487,20 +470,21 @@ instance Series.instApproxMulFun [ApproxSeries α 𝕜] : ApproxMul (Series α) 
       simp only [order_mul, lt_inf_iff] at lt
       rw [series_coeff_mul]
       · simp only [size_mul, apply_ite (f := fun x ↦ x ≤ i), zero_le, if_true_left, not_or,
-          and_imp, ENat.min_coe_le_iff, min_le_iff, not_le.mpr lt.1, not_le.mpr lt.2,
+          and_imp, min_le_iff, min_le_iff, not_le.mpr lt.1, not_le.mpr lt.2,
           false_or] at le
         refine Finset.sum_eq_zero fun ⟨a,b⟩ m ↦ ?_
         simp only [Finset.mem_antidiagonal, mul_eq_zero] at m ⊢
         have big : f.c.size ≤ a ∨ g.c.size ≤ b := by omega
         rcases big with big | big
-        · exact .inl (series_coeff_eq_zero fa a big (lt_of_le_of_lt (by simp; omega) lt.1))
-        · exact .inr (series_coeff_eq_zero ga b big (lt_of_le_of_lt (by simp; omega) lt.2))
+        · exact .inl (series_coeff_eq_zero fa a big (lt_of_le_of_lt (by omega) lt.1))
+        · exact .inr (series_coeff_eq_zero ga b big (lt_of_le_of_lt (by omega) lt.2))
       · exact (fa i lt.1).1
       · exact (ga i lt.2).1
     · rw [exact_mul]
       · generalize ho : min f.order g.order = order
         simp only [mul_def, mul, ho, order_exact, Subarray.size_karatsuba', Series.approx_def,
-          extend_def, Array.size_takeLt, ENat.min_coe_eq_zero_iff, size_exact, lt_min_iff]
+          extend_def, Array.size_takeLt, size_exact, lt_min_iff, Nat.min_eq_zero_iff,
+          ENat.coe_min_coe]
         intro i ⟨io,_⟩
         have o0 : order ≠ 0 := by contrapose io; simp_all
         have fo0 : f.order ≠ 0 := by contrapose o0; simp_all
@@ -518,17 +502,17 @@ instance Series.instApproxMulFun [ApproxSeries α 𝕜] : ApproxMul (Series α) 
           rw [← r]
           apply Array.approx_take
           apply Subarray.approx_karatsuba'
-          · refine ⟨by simp [← ho], fun i lt ↦ ?_⟩
+          · refine ⟨by simp [← ho]; omega, fun i lt ↦ ?_⟩
             simp only [Array.size_takeLt, ENat.lt_min_coe_iff] at lt
             have flt : i < f.order := lt_of_lt_of_le lt.1 (by order)
             simp only [Subarray.eq_extend, lt.1, flt, lt.2, exact, Array.extend_takeLt,
-              if_true, Array.extend_ofFn, ENat.lt_min_coe_iff, true_and, dite_true]
+              if_true, Array.extend_ofFn, lt_min_iff, true_and, dite_true]
             exact (fa i flt).2
           · refine ⟨by simp [← ho], fun i lt ↦ ?_⟩
             simp only [Array.size_takeLt, ENat.lt_min_coe_iff] at lt
             have glt : i < g.order := lt_of_lt_of_le lt.1 (by order)
             simp only [Subarray.eq_extend, lt.1, glt, lt.2, exact, Array.extend_takeLt,
-              if_true, Array.extend_ofFn, ENat.lt_min_coe_iff, true_and, dite_true]
+              if_true, Array.extend_ofFn, lt_min_iff, true_and, dite_true]
             exact (ga i glt).2
       · intro i lt; exact (fa i lt).1
       · intro i lt; exact (ga i lt).1

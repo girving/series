@@ -25,7 +25,7 @@ variable {α : Type} [Zero α]
 
 /-- Machinery for power series Newton iteration -/
 structure Newton (α : Type) [Zero α] : Type where
-  order : ℕ∞
+  order : ℕ
   start : α
   step : Series α → Series α
   order_step : ∀ f : Series α, f.order ≤ order → (step f).order = f.order
@@ -37,7 +37,7 @@ attribute [simp] Newton.order_step
 
 /-- Solve an equation via power series Newton's method -/
 def solve (n : Newton α) (k : ℕ) : Series α :=
-  if k ≤ 1 then (Series.const n.start).withOrder k else
+  if k ≤ 1 then .const n.start k else
   n.step ((n.solve (k ⌈/⌉ 2)).withOrder k)
   termination_by k
   decreasing_by simp only [Nat.ceilDiv_eq_add_pred_div, Nat.add_one_sub_one]; omega
@@ -110,22 +110,23 @@ lemma Valid.approx_exact [ApproxZero α 𝕜] (v : n.Valid f y c) (jk : j ≤ n.
   rw [solve]
   split_ifs with j1
   · intro i lt
-    simp only [Series.order_withOrder, Nat.cast_lt] at lt
+    simp only [Series.order_const] at lt
     have i0 : i = 0 := by omega
-    have j0 : 0 < j := by omega
-    simp only [i0, CharP.cast_eq_zero, Series.extend_withOrder, Nat.cast_pos, j0, ↓reduceIte,
-      Series.extend_const, series_coeff_zero']
+    have j0 : j ≠ 0 := by omega
+    have j0' : 0 < j := by omega
+    simp only [i0, CharP.cast_eq_zero, Series.extend_const, ne_eq, j0, not_false_eq_true, and_self,
+      ↓reduceIte, series_coeff_zero']
     exact ⟨dx _ (by omega), x0 ▸ v.start⟩
   · generalize hi : j ⌈/⌉ 2 = i
     simp only [Nat.ceilDiv_eq_add_pred_div] at hi
     have ij : i < j := by omega
     have i1 : 1 ≤ i := by omega
-    have io : i ≤ n.order := le_trans (by simp; order) jk
+    have io : i ≤ n.order := le_trans (by order) jk
     have ux : approx ((n.solve i).withOrder j)
-        (seriesTrunc x ((n.solve i).order.min_coe j) 0) := by
+        (seriesTrunc x (min (n.solve i).order j) 0) := by
       apply Series.approx_withOrder_seriesTrunc
       exact h _ (by omega) io x0 (fun _ _ ↦ dx _ (by omega)) (fx.mono (by omega))
-    rw [order_solve io, ENat.coe_min_coe, min_eq_left ij.le] at ux
+    rw [order_solve io, min_eq_left ij.le] at ux
     set u := n.solve i with hu
     have xt0 : seriesTrunc x i 0 0 = c := by rw [seriesTrunc_const (by omega), x0]
     refine Series.congr_right (n := j) (v.step xt0 ux (by simp; omega) (by simp; omega)) ?_ ?_

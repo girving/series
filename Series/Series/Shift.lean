@@ -17,10 +17,10 @@ variable {α : Type} [SeriesScalar α] [ApproxSeries α 𝕜]
 
 /-- Multiply by a power of `z`, discarding new high-order terms -/
 def Series.shift (f : Series α) (n : ℕ) : Series α where
-  c := .ofFn fun i : Fin (f.order.min_coe (f.c.size + n)) ↦
+  c := .ofFn fun i : Fin (min f.order (f.c.size + n)) ↦
     if a : i < n then 0 else f.c[i - n]'(by have b := i.prop; simp at b; omega)
   order := f.order
-  le := by simp only [Array.size_ofFn, ENat.min_coe_le_left]
+  le := by simp only [Array.size_ofFn, min_le_left]
 
 instance : HShiftLeft (Series α) ℕ (Series α) where
   hShiftLeft f n := f.shift n
@@ -28,12 +28,12 @@ instance : HShiftLeft (Series α) ℕ (Series α) where
 @[simp] lemma Series.order_shift (f : Series α) (n : ℕ) : (f <<< n).order = f.order := rfl
 
 lemma Series.c_shift (f : Series α) (n : ℕ) :
-    (f <<< n).c = .ofFn fun i : Fin (f.order.min_coe (f.c.size + n)) ↦
+    (f <<< n).c = .ofFn fun i : Fin (min f.order (f.c.size + n)) ↦
       if a : i < n then 0 else f.c[i - n]'(by have b := i.prop; simp at b; omega) := rfl
 
 lemma Series.extend_shift (f : Series α) (n k : ℕ) :
     (f <<< n).extend k = if k < n ∨ f.order ≤ k then 0 else f.extend (k - n) := by
-  simp only [extend_def, c_shift, Array.extend_def, Array.size_ofFn, ENat.lt_min_coe_iff,
+  simp only [extend_def, c_shift, Array.extend_def, Array.size_ofFn, lt_min_iff,
     Array.getElem_ofFn]
   grind
 
@@ -66,11 +66,11 @@ lemma series_coeff_shift {f : 𝕜 → 𝕜} {m n k : ℕ} (fc : ContDiffAt 𝕜
     simp only [extend_shift, not_le.mpr lt, or_false]
     rw [series_coeff_shift b.1 (le_refl _)]
     split_ifs with ni
-    · simp only [approx_zero]
+    · approx
     · exact c.2
 
 /-- Series shift nicely approximates `z ^ n` -/
-@[approx] lemma Series.approx_one_shift (n : ℕ) :
-    approx ((1 : Series α) <<< n) (fun z : 𝕜 ↦ z ^ n) := by
+@[approx] lemma Series.approx_one_shift (n o : ℕ) :
+    approx ((const (1 : α) o) <<< n) (fun z : 𝕜 ↦ z ^ n) := by
   simpa only [mul_one] using Series.approx_shift (𝕜 := 𝕜)
-    (f := (1 : Series α)) (f' := fun z ↦ 1) approx_one n
+    (f := const (1 : α) o) (f' := fun z ↦ 1) approx_one n

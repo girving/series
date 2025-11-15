@@ -13,14 +13,13 @@ variable {α 𝕜 : Type} [SeriesScalar α] [RCLike 𝕜] [ApproxSeries α 𝕜]
 /-- Division by 2 for series -/
 instance : Div2 (Series α) where
   div2 x := x.map Div2.div2
-  div2_zero := by ext <;> simp [Series.map, Array.extend_def, Series.zero_def, Series.const]
 
 lemma Series.div2_def (x : Series α) : Div2.div2 x = x.map Div2.div2 := rfl
 
 @[simp] lemma Series.order_div2 (x : Series α) : (div2 x).order = x.order := by
   simp only [Series.div2_def, order_map]
 
-instance [ApproxDiv2 α 𝕜] : ApproxDiv2 (Series α) (𝕜 → 𝕜) where
+instance [Div2Zero α] [ApproxDiv2 α 𝕜] : ApproxDiv2 (Series α) (𝕜 → 𝕜) where
   approx_div2 {x x'} a := by
     intro i lt
     simp only [Series.order_div2] at lt

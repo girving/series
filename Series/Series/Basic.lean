@@ -29,8 +29,8 @@ padded with zeros up to `O(z ^ order)`. Any coefficients beyond are considered u
 structure Series (α : Type) [Zero α] : Type where
   /-- Explicit coefficients -/
   c : Array α
-  /-- The approximation is valid up to `O(z ^ order)`, which might be `O(z ^ ∞)`. -/
-  order : ℕ∞
+  /-- The approximation is valid up to `O(z ^ order)`. -/
+  order : ℕ
   /-- We don't have any meaningless explicit coefficients -/
   le : c.size ≤ order
 
@@ -94,20 +94,14 @@ lemma contDiffAt_of_approx [Approx α E] {f : Series α} {f' : 𝕜 → E} (a : 
     (f0 : f.order ≠ 0) : ContDiffAt 𝕜 (f.order - 1) f' 0 := by
   simp only [approx] at a
   generalize f.order = o at a f0
-  induction' o with o
-  · simp only [WithTopENat.infty_sub_one, contDiffAt_infty]
-    intro n
-    exact (a n (by simp)).1
-  · simp only [WithTop.coe_natCast]
-    norm_cast at f0
-    specialize a (o - 1) (by norm_cast; omega)
-    norm_cast
-    exact a.1
+  specialize a (o - 1) (by omega)
+  norm_cast
+  exact a.1
 
 lemma approx_of_order_eq_zero [Approx α E] {f : Series α} {f' : 𝕜 → E} (o0 : f.order = 0) :
     approx f f' := by
   intro i lt
-  simp only [o0, ENat.not_lt_zero] at lt
+  simp only [o0, not_lt_zero'] at lt
 
 /-!
 ### `nan`, the empty series, could be anything
@@ -117,6 +111,9 @@ instance : Nan (Series α) where
   nan := ⟨#[], 0, le_refl _⟩
 
 @[simp] lemma order_nan : (nan : Series α).order = 0 := rfl
+@[simp] lemma c_nan : (nan : Series α).c = #[] := rfl
+@[simp] lemma extend_nan (i : ℕ) : (nan : Series α).extend i = 0 := by simp [nan, extend_def]
+@[simp] lemma extend_c_nan (i : ℕ) : (nan : Series α).c.extend i = 0 := by simp [nan]
 
 instance [Approx α 𝕜] : ApproxNan (Series α) (𝕜 → 𝕜) where
   approx_nan f' := by simp [approx, order_nan]
@@ -125,20 +122,20 @@ instance [Approx α 𝕜] : ApproxNan (Series α) (𝕜 → 𝕜) where
 ### Alternate characterisation of `Approx` via exact series
 -/
 
-noncomputable def exact (f : 𝕜 → E) (order : ℕ∞) (n : ℕ) : Series E :=
-  ⟨.ofFn fun i : Fin (order.min_coe n) ↦ series_coeff i f 0, order,
-   by simp only [Array.size_ofFn, ENat.min_coe_le_left]⟩
+noncomputable def exact (f : 𝕜 → E) (order : ℕ) (n : ℕ) : Series E :=
+  ⟨.ofFn fun i : Fin (min order n) ↦ series_coeff i f 0, order,
+   by simp only [Array.size_ofFn, inf_le_left]⟩
 
-@[simp] lemma order_exact (f : 𝕜 → E) (order : ℕ∞) (n : ℕ) : (exact f order n).order = order := by
+@[simp] lemma order_exact (f : 𝕜 → E) (order : ℕ) (n : ℕ) : (exact f order n).order = order := by
   simp only [exact]
 
-@[simp] lemma size_exact (f : 𝕜 → E) (order : ℕ∞) (n : ℕ) :
-    (exact f order n).c.size = order.min_coe n := by
+@[simp] lemma size_exact (f : 𝕜 → E) (order : ℕ) (n : ℕ) :
+    (exact f order n).c.size = min order n := by
   simp only [exact, Array.size_ofFn]
 
-@[simp] lemma extend_exact (f : 𝕜 → E) (order : ℕ∞) (n i : ℕ) :
-    (exact f order n).extend i = if i < order.min_coe n then series_coeff i f 0 else 0 := by
-  simp only [exact, extend_def, Array.extend_ofFn, ENat.lt_min_coe_iff, dite_eq_ite]
+@[simp] lemma extend_exact (f : 𝕜 → E) (order : ℕ) (n i : ℕ) :
+    (exact f order n).extend i = if i < min order n then series_coeff i f 0 else 0 := by
+  simp only [exact, extend_def, Array.extend_ofFn, dite_eq_ite]
 
 /-- Implicitly approximated terms are zero -/
 lemma series_coeff_eq_zero [Approx α E] [ApproxZero α E] [ApproxZeroIff α E] {f : Series α}
@@ -154,7 +151,7 @@ lemma approx_exact [Approx α E] [ApproxZero α E] [ApproxZeroIff α E] {f : Ser
   intro i lt
   obtain ⟨c,a⟩ := fa i lt
   refine ⟨c, ?_⟩
-  simp only [extend_def, order_exact, approx, extend_exact, ENat.lt_min_coe_iff, ite_eq_left_iff,
+  simp only [extend_def, order_exact, approx, extend_exact, lt_min_iff, ite_eq_left_iff,
     not_and, not_lt] at a lt ⊢
   simp only [lt, forall_const]
   intro le
@@ -178,7 +175,7 @@ lemma approx_of_exact [Approx α E] [ApproxZero α E] {f : Series α} {f' : 𝕜
   by_cases fi : i < f.c.size
   · specialize fa i ?_
     · simp only [order_exact, min_self, lt]
-    · simpa only [extend_exact, ENat.lt_min_coe_iff, lt, fi, and_self, ↓reduceIte] using fa
+    · simpa only [extend_exact, lt_min_iff, lt, fi, and_self, ↓reduceIte] using fa
   · simp only [not_lt] at fi
     simp only [extend_def, Array.extend_of_le fi, f0 i fi lt, approx_zero]
 
@@ -187,15 +184,15 @@ lemma approx_of_exact [Approx α E] [ApproxZero α E] {f : Series α} {f' : 𝕜
 -/
 
 /-- Change `order` (up or down) -/
-@[irreducible] def withOrder (f : Series α) (order : ℕ∞) : Series α :=
-  ⟨f.c.take (order.min_coe f.c.size), order, by simp⟩
+@[irreducible] def withOrder (f : Series α) (order : ℕ) : Series α :=
+  ⟨f.c.take (min order f.c.size), order, by simp⟩
 
-@[simp] lemma order_withOrder (f : Series α) (order : ℕ∞) : (f.withOrder order).order = order := by
+@[simp] lemma order_withOrder (f : Series α) (order : ℕ) : (f.withOrder order).order = order := by
   rw [withOrder.eq_def]
 
-@[simp] lemma extend_withOrder (f : Series α) (order : ℕ∞) (i : ℕ) :
+@[simp] lemma extend_withOrder (f : Series α) (order : ℕ) (i : ℕ) :
     (f.withOrder order).extend i = if i < order then f.extend i else 0 := by
-  simp only [withOrder, extend_def, Array.extend_take, ENat.lt_min_coe_iff]
+  simp only [withOrder, extend_def, Array.extend_take, lt_min_iff]
   split_ifs with h0 h1 h2
   · rfl
   · simp only [h1, false_and] at h0
@@ -203,7 +200,7 @@ lemma approx_of_exact [Approx α E] [ApproxZero α E] {f : Series α} {f' : 𝕜
     rw [Array.extend_of_le h0]
   · rfl
 
-lemma approx_withOrder [Approx α E] {f : Series α} {f' : 𝕜 → E} (fa : approx f f') {order : ℕ∞}
+lemma approx_withOrder [Approx α E] {f : Series α} {f' : 𝕜 → E} (fa : approx f f') {order : ℕ}
     (le : order ≤ f.order) : approx (f.withOrder order) f' := by
   intro i lt
   simp only [order_withOrder] at lt
@@ -213,12 +210,11 @@ lemma approx_withOrder [Approx α E] {f : Series α} {f' : 𝕜 → E} (fa : app
 /-- Zero extensions approximate truncated series -/
 @[approx] lemma approx_withOrder_seriesTrunc [CharZero 𝕜] [Approx α 𝕜] [ApproxZero α 𝕜]
     {f : Series α} {f' : 𝕜 → 𝕜} (fa : approx f f') {n : ℕ} :
-    approx (f.withOrder n) (seriesTrunc f' (f.order.min_coe n) 0) := by
+    approx (f.withOrder n) (seriesTrunc f' (min f.order n) 0) := by
   intro i lt
-  simp only [order_withOrder, Nat.cast_lt] at lt
+  simp only [order_withOrder] at lt
   refine ⟨by fun_prop, ?_⟩
-  simp only [extend_withOrder, Nat.cast_lt, lt, ↓reduceIte, series_coeff_seriesTrunc,
-    ENat.lt_min_coe_iff, and_true]
+  simp only [extend_withOrder, lt, ↓reduceIte, series_coeff_seriesTrunc, lt_min_iff, and_true]
   split_ifs with fi
   · exact (fa i fi).2
   · simp only [not_lt] at fi
@@ -228,7 +224,7 @@ lemma approx_withOrder [Approx α E] {f : Series α} {f' : 𝕜 → E} (fa : app
 @[approx] lemma approx_withOrder_seriesTrunc' [CharZero 𝕜] [Approx α 𝕜] [ApproxZero α 𝕜]
     {f : Series α} {f' : 𝕜 → 𝕜} (fa : approx f f') {n : ℕ} (le : n ≤ f.order) :
     approx (f.withOrder n) (seriesTrunc f' n 0) := by
-  simpa only [ENat.min_coe_eq_right le] using approx_withOrder_seriesTrunc fa (n := n)
+  simpa only [min_eq_right le] using approx_withOrder_seriesTrunc fa (n := n)
 
 /-!
 ### Map all explicit coefficients

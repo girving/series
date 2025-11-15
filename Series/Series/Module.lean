@@ -24,12 +24,12 @@ variable {𝕜 : Type} [NontriviallyNormedField 𝕜]
 
 @[irreducible] def add [Add α] [Zero α] (f g : Series α) : Series α :=
   let order := min f.order g.order
-  let n := order.min_coe (max f.c.size g.c.size)
+  let n := min order (max f.c.size g.c.size)
   ⟨.ofFn fun i : Fin n ↦ f.extend i + g.extend i, order, by simp [n]⟩
 
 @[irreducible] def sub [Sub α] [Zero α] (f g : Series α) : Series α :=
   let order := min f.order g.order
-  let n := order.min_coe (max f.c.size g.c.size)
+  let n := min order (max f.c.size g.c.size)
   ⟨.ofFn fun i : Fin n ↦ f.extend i - g.extend i, order, by simp [n]⟩
 
 @[irreducible] def smul [SMul α β] [Zero β] (s : α) (f : Series β) : Series β :=
@@ -75,7 +75,7 @@ instance instApproxNeg [Zero α] [Neg α] [NegZeroClass' α] [Approx α 𝕜] [A
 instance instApproxAdd [Zero α] [Add α] [AddZeroClass' α] [Approx α 𝕜] [ApproxAdd α 𝕜] :
     ApproxAdd (Series α) (𝕜 → 𝕜) where
   approx_add {f g f' g'} fa ga k lt := by
-    simp only [add_def, add, extend_def, lt_min_iff, Array.extend_ofFn, ENat.lt_min_coe_iff,
+    simp only [add_def, add, extend_def, lt_min_iff, Array.extend_ofFn, lt_min_iff,
       lt_sup_iff, dite_eq_ite] at k lt ⊢
     simp only [lt, and_self, true_and]
     obtain ⟨fc, fa⟩ := fa k lt.1
@@ -92,7 +92,7 @@ instance instApproxAdd [Zero α] [Add α] [AddZeroClass' α] [Approx α 𝕜] [A
 instance instApproxSub [Zero α] [Neg α] [Sub α] [SubZeroClass α] [Approx α 𝕜] [ApproxSub α 𝕜] :
     ApproxSub (Series α) (𝕜 → 𝕜) where
   approx_sub {f g f' g'} fa ga k lt := by
-    simp only [sub_def, sub, extend_def, lt_min_iff, Array.extend_ofFn, ENat.lt_min_coe_iff,
+    simp only [sub_def, sub, extend_def, lt_min_iff, Array.extend_ofFn, lt_min_iff,
       lt_sup_iff, dite_eq_ite] at k lt ⊢
     simp only [lt, and_self, true_and]
     obtain ⟨fc, fa⟩ := fa k lt.1

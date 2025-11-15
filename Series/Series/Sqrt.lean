@@ -17,25 +17,15 @@ We restrict to the monic case for simplicity.
 open Set
 open scoped ContDiff Topology
 
-variable {α : Type} [SeriesScalar α] [ApproxSeries α ℂ] [Div2 α] [ApproxDiv2 α ℂ]
+variable {α : Type} [SeriesScalar α] [ApproxSeries α ℂ] [Div2 α] [Div2Zero α] [ApproxDiv2 α ℂ]
 variable {𝕜 : Type} [NontriviallyNormedField 𝕜]
 
 /-- Newton iteration for monic series square root -/
 def sqrt_newton (y : Series α) : Newton α where
-  order := y.order.toNat
+  order := y.order
   start := 1
   step x := div2 (x + y * x.inv 1)
-  order_step f le := by
-    simp only [Series.order_div2, Series.order_add, Series.order_mul, Series.order_inv, inf_eq_left,
-      le_inf_iff]
-    generalize f.order = o at le
-    induction' o with o
-    · simp only [← not_lt, ENat.coe_lt_top, not_true_eq_false] at le
-    · norm_cast at le
-      simp only [ENat.toNat_coe, le_refl, and_true]
-      trans ↑y.order.toNat
-      · simpa
-      · apply ENat.coe_toNat_le_self
+  order_step f le := by simp; omega
 
 @[simp] lemma pow_two_div_self {x : 𝕜} : x ^ 2 / x = x := by
   simp only [pow_two, mul_self_div_self]
@@ -49,10 +39,7 @@ lemma valid_sqrt_newton {y : Series α} {y' : ℂ → ℂ} (ay : approx y y')
     fun_prop
   dy := by
     simp only [sqrt_newton]
-    apply (Series.contDiffAt_of_approx ay yo).of_le
-    apply tsub_le_tsub_right
-    norm_cast
-    apply ENat.coe_toNat_le_self
+    exact (Series.contDiffAt_of_approx ay yo).of_le (by norm_cast)
   fc := by simp [y0]
   f0 := by simp
   start := by simp [sqrt_newton]
@@ -70,23 +57,20 @@ lemma valid_sqrt_newton {y : Series α} {y' : ℂ → ℂ} (ay : approx y y')
 
 /-- Monic series square root using Newton's method -/
 def Series.sqrt (y : Series α) : Series α :=
-  (sqrt_newton y).solve y.order.toNat
+  (sqrt_newton y).solve y.order
 
 /-- Series inversion is conservative -/
 lemma Series.approx_sqrt {y : Series α} {y' : ℂ → ℂ} (ay : approx y y')
     (y0 : y' 0 = 1) : approx y.sqrt (Complex.sqrt ∘ y') := by
   by_cases yo : y.order = 0
   · apply Series.approx_of_order_eq_zero
-    rw [sqrt, Newton.order_solve, yo, ENat.toNat_zero, CharP.cast_eq_zero]
-    simp only [yo, ENat.toNat_zero, CharP.cast_eq_zero, zero_le]
+    rw [sqrt, Newton.order_solve, yo]
+    simp only [yo, zero_le]
   have dy := Series.contDiffAt_of_approx ay yo
-  have dy' : ∀ i < y.order.toNat, ContDiffAt ℂ i y' 0 := by
+  have dy' : ∀ i < y.order, ContDiffAt ℂ i y' 0 := by
     intro i lt
-    apply dy.of_le
-    trans ↑y.order.toNat - 1
-    · norm_cast; omega
-    · apply tsub_le_tsub_right; norm_cast; apply ENat.coe_toNat_le_self
-  have dyi : ∀ i < y.order.toNat, ContDiffAt ℂ i y'⁻¹ 0 := fun i lt ↦ (dy' i lt).inv (by simp [y0])
+    exact dy.of_le (by norm_cast; omega)
+  have dyi : ∀ i < y.order, ContDiffAt ℂ i y'⁻¹ 0 := fun i lt ↦ (dy' i lt).inv (by simp [y0])
   apply (valid_sqrt_newton ay yo y0).approx_exact
   · simp only [sqrt_newton, le_refl]
   · simp only [Function.comp_apply, y0, Complex.sqrt_one]
@@ -96,6 +80,6 @@ lemma Series.approx_sqrt {y : Series α} {y' : ℂ → ℂ} (ay : approx y y')
   · simp only [Function.comp_apply, Complex.sq_sqrt]
     exact SeriesEq.refl dy'
 
-omit [ApproxSeries α ℂ] [ApproxDiv2 α ℂ] in
-@[simp] lemma Series.order_sqrt (p : Series α) : (p.sqrt).order = p.order.toNat := by
+omit [ApproxSeries α ℂ] [Div2Zero α] [ApproxDiv2 α ℂ] in
+@[simp] lemma Series.order_sqrt (p : Series α) : (p.sqrt).order = p.order := by
   simp only [sqrt, sqrt_newton, le_refl, Newton.order_solve]
