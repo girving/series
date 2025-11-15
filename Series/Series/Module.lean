@@ -16,16 +16,28 @@ variable {α β : Type}
 variable {𝕜 : Type} [NontriviallyNormedField 𝕜]
 
 /-!
+### Auxiliary size lemmas
+-/
+
+lemma binary_n_eq [Zero α] (f g : Series α) :
+    let order := min f.order g.order
+    let n := min (Tree.min_n order) (max f.n g.n)
+    max (min f.n n) (min g.n n) = n := by
+  sorry
+
+/-!
 ### Definitions
 -/
 
 @[irreducible] def neg [Neg α] [Zero α] (f : Series α) : Series α :=
-  f.map (-·)
+  ⟨f.n, f.c.neg, f.order, f.n_le, by simp [f.size_le]⟩
 
 @[irreducible] def add [Add α] [Zero α] (f g : Series α) : Series α :=
   let order := min f.order g.order
-  let n := min order (max f.c.size g.c.size)
-  ⟨.ofFn fun i : Fin n ↦ f.extend i + g.extend i, order, by simp [n]⟩
+  let n := min (Tree.min_n order) (max f.n g.n)
+  let f' := f.c.take n order
+  let g' := g.c.take n order
+  ⟨n, (binary_n_eq f g).ndrec (f'.add g'), order, by omega, by simp⟩
 
 @[irreducible] def sub [Sub α] [Zero α] (f g : Series α) : Series α :=
   let order := min f.order g.order

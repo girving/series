@@ -13,16 +13,24 @@ variable {E : Type} [NormedAddCommGroup E] [NormedSpace 𝕜 E]
 /-- A constant accurate to any desired order -/
 @[irreducible] def const (s : α) (n : ℕ) : Series α :=
   if h : n = 0 then nan
-  else ⟨#[s], n, by simp; omega⟩
+  else ⟨0, .leaf s, n, by simp, by simp; omega⟩
 
 lemma extend_const (s : α) (n : ℕ) (i : ℕ) :
-    (const s n).extend i = if i = 0 ∧ n ≠ 0 then s else 0 := by
+    (const s n).extend_slow i = if i = 0 ∧ n ≠ 0 then s else 0 := by
   simp only [const, extend_def]
-  split_ifs <;> simp_all [Array.extend_def]
+  split_ifs with h
+  · aesop
+  · rw [dif_neg h]
+    simp_all
 
 @[simp] lemma order_const (s : α) (n : ℕ) : (const s n).order = n := by simp [const]; aesop
 @[simp] lemma size_const (s : α) (n : ℕ) : (const s n).c.size = min n 1 := by
-  simp [const]; aesop (add safe tactic (by omega))
+  unfold const
+  split_ifs with h
+  · aesop
+  · rw [dif_neg h]
+    simp_all
+    omega
 
 /-- Constants represent constants -/
 @[approx] lemma approx_const [Approx α E] [ApproxZero α E] (s : α) (n : ℕ) (s' : E)

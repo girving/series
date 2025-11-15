@@ -14,6 +14,8 @@ open Polynomial (X)
 open scoped Polynomial
 
 attribute [bound] Polynomial.degree_mul_le Polynomial.natDegree_mul_le
+attribute [grind =] Polynomial.C_add Polynomial.C_neg Polynomial.C_sub Polynomial.C_mul
+  Polynomial.coeff_C Polynomial.coeff_zero Polynomial.coeff_mul_X_pow' Polynomial.coeff_add
 
 /-!
 ### Semiring facts
@@ -137,6 +139,14 @@ lemma Array.poly_toSubarray {f : Array S} {a : ℕ} (h : a = f.size) :
 lemma Polynomial.C_eq_smul_one (s : S) : C s = s • 1 := by
   ext i
   simp only [coeff_C, coeff_smul, coeff_one, smul_eq_mul, mul_ite, mul_one, mul_zero]
+
+@[grind =] lemma Polynomial.smul_eq_C_smul {R : Type} [Semiring R] [Module S R]
+    [IsScalarTower S R R] (s : S) (x : R[X]) : s • x = C (s • (1 : R)) * x := by
+  simp only [ext_iff, coeff_smul, coeff_mul, coeff_C, ite_mul, zero_mul, smul_one_mul]
+  intro n
+  rw [Finset.sum_eq_single (a := (0,n)) _ (by simp)]
+  · simp
+  · aesop
 
 end Semiring
 

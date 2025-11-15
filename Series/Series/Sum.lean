@@ -10,44 +10,62 @@ variable {n : ℕ}
 variable {α' : Type} [NontriviallyNormedField α']
 variable {β' : Type} [NontriviallyNormedField β']
 variable {α : Type} [SeriesScalar α] [ApproxSeries α α']
-variable {β : Type} [Zero β] [Add β] [Approx β β'] [ApproxZero β β'] [ApproxAdd β β']
+variable {β : Type} [Zero β] [Add β] [Approx β β'] [ApproxZero β β'] [ApproxZeroIff α α']
+  [ApproxAdd β β']
 
 /-- Sum the coefficients of a series, mapping it along the way. We'll require `g _ 0 = 0` later. -/
 def Series.sum (f : Series α) (g : ℕ → α → β) : β :=
   (f.c.mapIdx g).sum
 
+/-- Tree summation approximates `Finset.sum` -/
+lemma Series.Tree.approx_sum' {f : Tree α n} {g : ℕ → α → β} {f' : ℕ → α'} {g' : ℕ → α' → β'}
+    {d m : ℕ} (fm : f.size ≤ m) (fa : ∀ k < m, approx (f.extend_slow k) (f' (d + k)))
+    (ga : ∀ k x x', approx x x' → approx (g k x) (g' k x')) (g0 : ∀ k, g' k 0 = 0) :
+    approx (f.mapIdx g d).sum (∑ k ∈ Finset.range m, g' (d + k) (f' (d + k))) := by
+  induction' f with n x n x h n x y hx hy generalizing d m
+  all_goals simp_all [mapIdx]
+  · rw [Finset.sum_eq_zero]
+    · approx
+    · simp_all [approx_zero_iff]
+  · rw [Finset.sum_eq_single (a := 0)]
+    · specialize fa 0 (by omega)
+      simp_all
+    · intro i im i0
+      specialize fa i (by simpa using im)
+      simp only [i0, ↓reduceIte, approx_zero_iff] at fa
+      simp_all
+    · intro m0
+      simp at m0
+      omega
+  · rw [← Finset.sum_subset (s₁ := Finset.range (2 ^ n + y.size)) (s₂ := Finset.range m),
+      Finset.sum_range_add]
+    · apply approx_add
+      · refine hx x.size_le_pow fun k lt ↦ ?_
+        simpa only [lt, ↓reduceIte] using fa k (by omega)
+      · simp only [← add_assoc]
+        refine hy (le_refl _) fun k lt ↦ ?_
+        simpa [add_comm k, ← add_assoc] using fa (k + 2 ^ n) (by omega)
+    · simp [fm]
+    · intro k km le
+      simp only [Finset.mem_range, not_lt] at le km
+      have nk : ¬k < 2 ^ n := by omega
+      have sk : y.size ≤ k - 2 ^ n := by omega
+      specialize fa k (by omega)
+      simp only [nk, ↓reduceIte, extend_of_le sk, approx_zero_iff] at fa
+      simp only [fa, g0]
+
+/-- Tree summation approximates `Finset.sum`, `d = 0` version -/
+lemma Series.Tree.approx_sum {f : Tree α n} {g : ℕ → α → β} {f' : ℕ → α'} {g' : ℕ → α' → β'}
+    {m : ℕ} (fm : f.size ≤ m) (fa : ∀ k < m, approx (f.extend_slow k) (f' k))
+    (ga : ∀ k x x', approx x x' → approx (g k x) (g' k x')) (g0 : ∀ k, g' k 0 = 0) :
+    approx (f.mapIdx g).sum (∑ k ∈ Finset.range m, g' k (f' k)) := by
+  have h := Series.Tree.approx_sum' (f := f) (g := g) (f' := f') (g' := g') (fm := fm) (d := 0)
+    ?_ ?_ g0
+  all_goals simp_all
+
 /-- Series sums approximate `series_coeff` sums -/
 @[approx] lemma Series.approx_sum {f : Series α} {f' : α' → α'} (fa : approx f f') {g : ℕ → α → β}
     {g' : ℕ → α' → β'} (ga : ∀ k x x', approx x x' → approx (g k x) (g' k x'))
     (g0 : ∀ k, g' k 0 = 0) (fn : f.order = n) :
-    approx (f.sum g) (∑ k ∈ Finset.range n, g' k (series_coeff k f' 0)) := by
-  rw [← Finset.sum_subset (s₁ := Finset.range f.c.size) (s₂ := Finset.range n)
-    (by simpa [fn] using f.le)]
-  · simp only [sum, ← Array.sum_eq_sum_toList, Array.toList_mapIdx]
-    generalize hxs : f.c.toList = xs
-    generalize hys : (fun k ↦ series_coeff k f' 0) = ys
-    replace hys : ∀ k, series_coeff k f' 0 = ys k := by simp [← hys]
-    have se : f.c.size = xs.length := by simp [← hxs]
-    have sa : ∀ k (h : k < xs.length), approx xs[k] (series_coeff k f' 0) := by
-      intro k lt
-      have a := (fa k (lt_of_lt_of_le (by simp [se, lt]) f.le)).2
-      simp only [Series.extend_def, Array.extend_def, se, lt, dite_true] at a
-      simp only [← hxs, Array.getElem_toList, a]
-    simp only [se, hys] at sa ⊢
-    clear f fa fn hxs se g0 f' hys
-    induction' xs with x xs h generalizing g g' ys
-    · simp
-    · simp only [List.mapIdx_cons, List.sum_cons, List.length_cons, Finset.sum_range_succ',
-        add_comm _ (g' _ _)]
-      refine approx_add (ga _ _ _ ?_) ?_
-      · simpa using sa 0 (by simp)
-      · apply h
-        · intro k x x' a
-          exact ga _ _ _ a
-        · intro k lt
-          simpa using sa (k + 1) (by simp; omega)
-  · intro k lt m
-    simp only [Finset.mem_range, not_lt] at lt m
-    have z := (fa k (by simp [fn, lt])).2
-    simp only [extend_def, Array.extend_def, not_lt.mpr m, ↓reduceDIte, approx_zero_iff] at z
-    simp only [z, g0]
+    approx (f.sum g) (∑ k ∈ Finset.range n, g' k (series_coeff k f' 0)) :=
+  f.c.approx_sum (by simpa [fn] using f.size_le) (fun k lt ↦ (fa k (fn ▸ lt)).2) ga g0

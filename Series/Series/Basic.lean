@@ -6,6 +6,7 @@ import Series.Analysis.Trunc
 import Series.Misc.Array
 import Series.Misc.Polynomial
 import Series.Misc.ENat
+import Series.Series.Tree
 
 /-!
 # Efficient truncated formal power series computations
@@ -19,6 +20,7 @@ variable {α β : Type} [Zero α] [Zero β]
 variable {S : Type} [Semiring S]
 variable {𝕜 : Type} [NontriviallyNormedField 𝕜]
 variable {E : Type} [NormedAddCommGroup E] [NormedSpace 𝕜 E]
+variable {n : ℕ}
 
 /-!
 ### Formal truncated power series
@@ -27,12 +29,16 @@ variable {E : Type} [NormedAddCommGroup E] [NormedSpace 𝕜 E]
 /-- A truncated power series is an array of explicit coefficients for `1, z, z^2, ...`,
 padded with zeros up to `O(z ^ order)`. Any coefficients beyond are considered unknown. -/
 structure Series (α : Type) [Zero α] : Type where
-  /-- Explicit coefficients -/
-  c : Array α
-  /-- The approximation is valid up to `O(z ^ order)`. -/
+  /-- Tree depth -/
+  n : ℕ
+  /-- Tree of coefficients -/
+  c : Series.Tree α n
+  /-- Order of approximation -/
   order : ℕ
-  /-- We don't have any meaningless explicit coefficients -/
-  le : c.size ≤ order
+  /-- `n` is not too big -/
+  n_le : n ≤ Series.Tree.min_n order
+  /-- `c.size` is not too big -/
+  size_le : c.size ≤ order
 
 /-- Typeclass that pulls in everything we need to define ring operations -/
 class SeriesScalar (α : Type) extends Zero α, One α, Neg α, Add α,
@@ -46,22 +52,24 @@ class ApproxSeries (α 𝕜 : Type) [SeriesScalar α] [NontriviallyNormedField �
 namespace Series
 
 /-- Coefficient indexing, including zero padding -/
-def extend (f : Series α) (n : ℕ) : α := f.c.extend n
+def extend_slow (f : Series α) (i : ℕ) : α := f.c.extend_slow i
 
-lemma extend_def (f : Series α) : f.extend = f.c.extend := rfl
+lemma extend_def (f : Series α) (i : ℕ) : f.extend_slow i = f.c.extend_slow i := rfl
 
 noncomputable def poly (f : Series S) : S[X] := f.c.poly
-lemma poly_def (f : Series S) : f.poly = f.c.poly := rfl
 
-/-- The function approximation corresponding to a `Series` -/
-noncomputable def f (f : Series S) : S → S :=
-  f.poly.eval
+-- DO NOT SUBMIT: Do I use this? Seems sketchy.
+--/-- The function approximation corresponding to a `Series` -/
+--noncomputable def f (f : Series S) : S → S :=
+--  f.poly.eval
 
 /-- Series approximate the first `n` derivatives of functions -/
 instance instApprox [Approx α E] : Approx (Series α) (𝕜 → E) where
   approx f f' := ∀ (n : ℕ), n < f.order →
-    ContDiffAt 𝕜 n f' 0 ∧ approx (f.extend n) (series_coeff n f' 0)
+    ContDiffAt 𝕜 n f' 0 ∧ approx (f.extend_slow n) (series_coeff n f' 0)
 
+-- DO NOT SUBMIT: DO I NEED THIS? It won't be natural with the tree version.
+/-
 @[ext] lemma ext (f g : Series α) (o : f.order = g.order) (s : f.c.size = g.c.size)
     (c : ∀ i < f.c.size, f.c.extend i = g.c.extend i) : f = g := by
   induction' f with fc fo fle
@@ -72,6 +80,7 @@ instance instApprox [Approx α E] : Approx (Series α) (𝕜 → E) where
     · exact s
     · simp only [Array.eq_extend, c i lt]
   simp only [e, o]
+  -/
 
 lemma congr_right [Approx α E] {f : Series α} {g g' : 𝕜 → E} (a : approx f g) {n : ℕ}
     (e : g' =ˢ[n] g) (le : f.order ≤ n) : approx f g' := by
@@ -86,9 +95,9 @@ lemma congr_right_of_eventuallyEq [Approx α E] {f : Series α} {g g' : 𝕜 →
   obtain ⟨c,a⟩ := a i lt
   exact ⟨c.congr_of_eventuallyEq e, by rwa [e.series_coeff_eq]⟩
 
-lemma extend_of_le {f : Series α} {i : ℕ} (le : f.order ≤ i) : f.extend i = 0 := by
-  rw [extend_def, Array.extend_of_le]
-  simpa only [Nat.cast_le] using le_trans f.le le
+lemma extend_of_le {f : Series α} {i : ℕ} (le : f.order ≤ i) : f.extend_slow i = 0 := by
+  apply Tree.extend_of_le
+  simpa only [Nat.cast_le] using f.size_le.trans le
 
 lemma contDiffAt_of_approx [Approx α E] {f : Series α} {f' : 𝕜 → E} (a : approx f f')
     (f0 : f.order ≠ 0) : ContDiffAt 𝕜 (f.order - 1) f' 0 := by
@@ -108,12 +117,12 @@ lemma approx_of_order_eq_zero [Approx α E] {f : Series α} {f' : 𝕜 → E} (o
 -/
 
 instance : Nan (Series α) where
-  nan := ⟨#[], 0, le_refl _⟩
+  nan := ⟨0, .zero, 0, by simp, by simp⟩
 
 @[simp] lemma order_nan : (nan : Series α).order = 0 := rfl
-@[simp] lemma c_nan : (nan : Series α).c = #[] := rfl
-@[simp] lemma extend_nan (i : ℕ) : (nan : Series α).extend i = 0 := by simp [nan, extend_def]
-@[simp] lemma extend_c_nan (i : ℕ) : (nan : Series α).c.extend i = 0 := by simp [nan]
+@[simp] lemma c_nan : (nan : Series α).c = .zero := rfl
+@[simp] lemma extend_nan (i : ℕ) : (nan : Series α).extend_slow i = 0 := by simp [nan, extend_def]
+@[simp] lemma extend_c_nan (i : ℕ) : (nan : Series α).c.extend_slow i = 0 := by simp [nan]
 
 instance [Approx α 𝕜] : ApproxNan (Series α) (𝕜 → 𝕜) where
   approx_nan f' := by simp [approx, order_nan]
@@ -122,20 +131,27 @@ instance [Approx α 𝕜] : ApproxNan (Series α) (𝕜 → 𝕜) where
 ### Alternate characterisation of `Approx` via exact series
 -/
 
-noncomputable def exact (f : 𝕜 → E) (order : ℕ) (n : ℕ) : Series E :=
-  ⟨.ofFn fun i : Fin (min order n) ↦ series_coeff i f 0, order,
-   by simp only [Array.size_ofFn, inf_le_left]⟩
+noncomputable def exact (f : 𝕜 → E) (order : ℕ) (s : ℕ) : Series E :=
+  let t := min order s
+  ⟨Tree.min_n t, .ofFn _ fun i : Fin t ↦ series_coeff i f 0, order, by bound, by simp; omega⟩
 
 @[simp] lemma order_exact (f : 𝕜 → E) (order : ℕ) (n : ℕ) : (exact f order n).order = order := by
   simp only [exact]
 
 @[simp] lemma size_exact (f : 𝕜 → E) (order : ℕ) (n : ℕ) :
     (exact f order n).c.size = min order n := by
-  simp only [exact, Array.size_ofFn]
+  simp only [exact, Tree.size_ofFn, min_eq_left (Tree.le_min_n _)]
 
 @[simp] lemma extend_exact (f : 𝕜 → E) (order : ℕ) (n i : ℕ) :
-    (exact f order n).extend i = if i < min order n then series_coeff i f 0 else 0 := by
-  simp only [exact, extend_def, Array.extend_ofFn, dite_eq_ite]
+    (exact f order n).extend_slow i = if i < min order n then series_coeff i f 0 else 0 := by
+  simp only [exact, extend_def, Tree.extend_ofFn, Nat.min_assoc, lt_inf_iff, dite_eq_ite]
+  split_ifs with h0 h1 h2
+  · rfl
+  · omega
+  · simp only [h2, true_and, not_lt] at h0
+    simp only [← lt_min_iff] at h2
+    linarith [Tree.le_min_n (min order n)]
+  · rfl
 
 /-- Implicitly approximated terms are zero -/
 lemma series_coeff_eq_zero [Approx α E] [ApproxZero α E] [ApproxZeroIff α E] {f : Series α}
@@ -143,7 +159,7 @@ lemma series_coeff_eq_zero [Approx α E] [ApproxZero α E] [ApproxZeroIff α E] 
     ∀ i, f.c.size ≤ i → i < f.order → series_coeff i f' 0 = 0 := by
   intro i le lt
   obtain ⟨c,a⟩ := fa i lt
-  simpa only [extend_def, Array.extend_def, not_lt.mpr le, dite_false, approx_zero_iff] using a
+  rwa [extend_def, Tree.extend_of_le le, approx_zero_iff] at a
 
 /-- If a series approximates a function, it approximates the exact series of matching length -/
 lemma approx_exact [Approx α E] [ApproxZero α E] [ApproxZeroIff α E] {f : Series α} {f' : 𝕜 → E}
@@ -151,18 +167,19 @@ lemma approx_exact [Approx α E] [ApproxZero α E] [ApproxZeroIff α E] {f : Ser
   intro i lt
   obtain ⟨c,a⟩ := fa i lt
   refine ⟨c, ?_⟩
-  simp only [extend_def, order_exact, approx, extend_exact, lt_min_iff, ite_eq_left_iff,
-    not_and, not_lt] at a lt ⊢
+  simp only [order_exact, approx, extend_exact, lt_inf_iff, ite_eq_left_iff, not_and,
+    not_lt] at a lt ⊢
   simp only [lt, forall_const]
   intro le
   rw [series_coeff_eq_zero fa _ le lt]
 
 /-- Series approximate series term by term -/
 instance instApproxSeries [Approx α β] : Approx (Series α) (Series β) where
-  approx f f' := ∀ i : ℕ, i < min f.order f'.order → approx (f.extend i) (f'.extend i)
+  approx f f' := ∀ i : ℕ, i < min f.order f'.order → approx (f.extend_slow i) (f'.extend_slow i)
 
 lemma approx_def [Approx α β] {f : Series α} {f' : Series β} :
-    approx f f' ↔ ∀ i : ℕ, i < min f.order f'.order → approx (f.extend i) (f'.extend i) := by rfl
+    approx f f' ↔
+      ∀ i : ℕ, i < min f.order f'.order → approx (f.extend_slow i) (f'.extend_slow i) := by rfl
 
 /-- Recover function approximation from exact series approximation -/
 lemma approx_of_exact [Approx α E] [ApproxZero α E] {f : Series α} {f' : 𝕜 → E}
@@ -177,7 +194,7 @@ lemma approx_of_exact [Approx α E] [ApproxZero α E] {f : Series α} {f' : 𝕜
     · simp only [order_exact, min_self, lt]
     · simpa only [extend_exact, lt_min_iff, lt, fi, and_self, ↓reduceIte] using fa
   · simp only [not_lt] at fi
-    simp only [extend_def, Array.extend_of_le fi, f0 i fi lt, approx_zero]
+    simp only [extend_def, Tree.extend_of_le fi, f0 i fi lt, approx_zero]
 
 /-!
 ### Adjust the order of approximation (up or down)
@@ -185,20 +202,27 @@ lemma approx_of_exact [Approx α E] [ApproxZero α E] {f : Series α} {f' : 𝕜
 
 /-- Change `order` (up or down) -/
 @[irreducible] def withOrder (f : Series α) (order : ℕ) : Series α :=
-  ⟨f.c.take (min order f.c.size), order, by simp⟩
+  let n := min f.n (Tree.min_n order)
+  have le : n ≤ f.n := min_le_left _ _
+  let c := (Nat.add_sub_cancel' le).symm ▸ f.c
+  ⟨n, c.take_le _ order, order, min_le_right _ _, Tree.size_take_le_le _ _⟩
 
 @[simp] lemma order_withOrder (f : Series α) (order : ℕ) : (f.withOrder order).order = order := by
   rw [withOrder.eq_def]
 
 @[simp] lemma extend_withOrder (f : Series α) (order : ℕ) (i : ℕ) :
-    (f.withOrder order).extend i = if i < order then f.extend i else 0 := by
-  simp only [withOrder, extend_def, Array.extend_take, lt_min_iff]
-  split_ifs with h0 h1 h2
-  · rfl
-  · simp only [h1, false_and] at h0
-  · simp only [h2, true_and, not_lt] at h0
-    rw [Array.extend_of_le h0]
-  · rfl
+    (f.withOrder order).extend_slow i = if i < order then f.extend_slow i else 0 := by
+  simp only [withOrder, extend_def, Tree.extend_take_le, Tree.extend_cast]
+  simp only [Nat.two_pow_min, lt_min_iff]
+  by_cases io : i < order
+  · simp only [io, true_and, if_true, ite_eq_left_iff, not_lt, not_and_or]
+    intro h
+    refine (Tree.extend_of_le ?_).symm
+    rcases h with h | h
+    · exact le_trans f.c.size_le_pow h
+    · have := Tree.le_min_n order
+      order
+  · simp [io]
 
 lemma approx_withOrder [Approx α E] {f : Series α} {f' : 𝕜 → E} (fa : approx f f') {order : ℕ}
     (le : order ≤ f.order) : approx (f.withOrder order) f' := by
@@ -231,17 +255,18 @@ lemma approx_withOrder [Approx α E] {f : Series α} {f' : 𝕜 → E} (fa : app
 -/
 
 @[irreducible] def map (f : α → β) (g : Series α) : Series β :=
-  ⟨g.c.map f, g.order, by simp only [Array.size_map, g.le]⟩
+  ⟨_, g.c.map f, g.order, g.n_le, by simp only [Tree.size_map, g.size_le]⟩
 
 @[simp] lemma order_map (f : α → β) (g : Series α) : (g.map f).order = g.order := by
   simp only [map]
 
 @[simp] lemma size_map (f : α → β) (g : Series α) : (g.map f).c.size = g.c.size := by
-  simp only [map, Array.size_map]
+  unfold map
+  simp only [Tree.size_map]
 
 lemma extend_map {f : α → β} {g : Series α} {n : ℕ} (f0 : f 0 = 0) :
-    (g.map f).extend n = f (g.extend n) := by
-  simp only [f0, map, extend_def, Array.extend_def, Array.size_map, Array.getElem_map, apply_dite f]
+    (g.map f).extend_slow n = f (g.extend_slow n) := by
+  simp only [f0, map, extend_def, Tree.extend_map]
 
-lemma coeff_poly {f : Series S} {n : ℕ} : f.poly.coeff n = f.extend n := by
-  simp only [poly, ← Array.extend_eq_coeff_poly, extend_def]
+lemma coeff_poly {f : Series S} {n : ℕ} : f.poly.coeff n = f.extend_slow n := by
+  simp only [poly, ← Tree.extend_eq_coeff_poly, extend_def]

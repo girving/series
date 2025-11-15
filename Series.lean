@@ -20,3 +20,4 @@ import Series.Series.Rat
 import Series.Series.Shift
 import Series.Series.Sqrt
 import Series.Series.Sum
+import Series.Series.Tree

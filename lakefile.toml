@@ -1,5 +1,6 @@
-name = "ray-series"
+name = "series"
 defaultTargets = ["Series"]
+testDriver = "SeriesTest"
 
 [leanOptions]
 pp.unicode.fun = true
@@ -17,3 +18,8 @@ rev = "broken"
 
 [[lean_lib]]
 name = "Series"
+
+[[lean_lib]]
+name = "SeriesTest"
+globs = ["test.+"]
+leanOptions = {linter.unusedVariables = false}
