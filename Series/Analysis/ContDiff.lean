@@ -45,7 +45,7 @@ lemma iteratedDeriv_const {n : ℕ} {x : 𝕜} {c : F} :
     iteratedDeriv n (fun _ ↦ c) x = if n = 0 then c else 0 := by
   induction' n with n h generalizing c
   · simp only [iteratedDeriv_zero, ↓reduceIte]
-  · simp only [iteratedDeriv_succ', deriv_const', h, ite_self, Nat.add_eq_zero, one_ne_zero,
+  · simp only [iteratedDeriv_succ', deriv_const', h, ite_self, Nat.add_eq_zero_iff, one_ne_zero,
       and_false, ↓reduceIte]
 
 lemma ContDiffAt.comp_of_eq {f : E → F} {g : F → G} {n : WithTop ℕ∞} (x : E) {y : F}

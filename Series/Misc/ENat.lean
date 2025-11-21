@@ -95,7 +95,6 @@ lemma ENat.min_coe_eq_right {x : ℕ∞} {y : ℕ} (le : y ≤ x) : x.min_coe y 
 
 lemma ENat.ne_top_of_lt {x : ENat} {y : ℕ} (le : x ≤ y) : x ≠ ⊤ := by
   contrapose le
-  simp only [ne_eq, not_not] at le
   simp [le]
 
 lemma ENat.lt_coe_iff_succ_le_coe (x : ℕ∞) (y : ℕ) : x < y ↔ x + 1 ≤ y := by

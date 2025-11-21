@@ -503,16 +503,16 @@ instance Series.instApproxMulFun [ApproxSeries α 𝕜] : ApproxMul (Series α) 
           apply Array.approx_take
           apply Subarray.approx_karatsuba'
           · refine ⟨by simp [← ho]; omega, fun i lt ↦ ?_⟩
-            simp only [Array.size_takeLt, ENat.lt_min_coe_iff] at lt
+            simp only [Array.size_takeLt, ENat.coe_min_coe, lt_inf_iff] at lt
             have flt : i < f.order := lt_of_lt_of_le lt.1 (by order)
             simp only [Subarray.eq_extend, lt.1, flt, lt.2, exact, Array.extend_takeLt,
-              if_true, Array.extend_ofFn, lt_min_iff, true_and, dite_true]
+              if_true, Array.extend_ofFn, lt_min_iff, true_and, dite_true, Nat.cast_lt]
             exact (fa i flt).2
           · refine ⟨by simp [← ho], fun i lt ↦ ?_⟩
-            simp only [Array.size_takeLt, ENat.lt_min_coe_iff] at lt
+            simp only [Array.size_takeLt, ENat.lt_min_coe_iff, Nat.cast_lt] at lt
             have glt : i < g.order := lt_of_lt_of_le lt.1 (by order)
             simp only [Subarray.eq_extend, lt.1, glt, lt.2, exact, Array.extend_takeLt,
-              if_true, Array.extend_ofFn, lt_min_iff, true_and, dite_true]
+              if_true, Array.extend_ofFn, lt_min_iff, true_and, dite_true, Nat.cast_lt]
             exact (ga i glt).2
       · intro i lt; exact (fa i lt).1
       · intro i lt; exact (ga i lt).1

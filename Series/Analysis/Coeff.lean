@@ -95,7 +95,7 @@ lemma series_coeff_const {x : 𝕜} {s : E} {n : ℕ} :
       one_smul, ↓reduceIte]
   · have e : series_coeff n (fun x ↦ s) (𝕜 := 𝕜) = fun _ ↦ if n = 0 then s else 0 := by
       ext x; simp only [h]
-    simp only [series_coeff_succ, e, deriv_const', smul_zero, Nat.add_eq_zero, one_ne_zero,
+    simp only [series_coeff_succ, e, deriv_const', smul_zero, Nat.add_eq_zero_iff, one_ne_zero,
       and_false, ↓reduceIte]
 
 /-- `series_coeff` is local -/

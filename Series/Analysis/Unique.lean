@@ -80,10 +80,9 @@ lemma hasDerivAt_leading (df : ContDiffAt 𝕜 m (uncurry f) (c, gc)) (nm : n + 
           (leading (n + 1) f g z + F (z, g z, fun i ↦ iteratedDeriv i g z)) z := by
   have m0 : m ≠ 0 := by
     contrapose nm
-    simp only [ne_eq, Decidable.not_not] at nm
     simp [nm]
   have m11 : m - 1 + 1 ≤ m := WithTopENat.sub_add_one_le m0
-  simp only [leading, Nat.add_eq_zero, one_ne_zero, and_false, ↓reduceIte]
+  simp only [leading, Nat.add_eq_zero_iff, one_ne_zero, and_false, ↓reduceIte]
   by_cases n0 : n = 0
   · simp only [n0, CharP.cast_eq_zero, zero_add, ↓reduceIte, iteratedDeriv_one]
     refine ⟨fun p ↦ deriv (fun t ↦ f t p.2.1) p.1, ?_, ?_⟩
@@ -112,7 +111,7 @@ lemma hasDerivAt_leading (df : ContDiffAt 𝕜 m (uncurry f) (c, gc)) (nm : n + 
         rw [e]
         apply WithTopENat.sub_add_one_le
         contrapose nm
-        simp only [ne_eq, tsub_eq_zero_iff_le, not_le, not_lt] at nm ⊢
+        simp only [tsub_eq_zero_iff_le, not_le] at nm ⊢
         exact lt_of_lt_of_le (b := 2) (lt_of_le_of_lt nm (by decide)) (by norm_cast; omega)
       refine ContDiffAt.mul (ContDiffAt.add ?_ ?_) (by fun_prop)
       · exact ddf.deriv' (f := fun x t ↦ deriv (f t) x) (by fun_prop) (by fun_prop) m2
@@ -173,7 +172,7 @@ lemma iteratedDeriv_comp_eq_leading_add {n : ℕ} (df : ContDiffAt 𝕜 m (uncur
         · simp
   · specialize hF g ge (dg.of_le (by simp))
     specialize hL g ge (by simpa using dg)
-    simp only [iteratedDeriv_succ, leading, Nat.add_eq_zero, one_ne_zero, and_false, ↓reduceIte]
+    simp only [iteratedDeriv_succ, leading, Nat.add_eq_zero_iff, one_ne_zero, and_false, ↓reduceIte]
     refine hF.deriv.trans ?_
     have pc : ContinuousAt (fun z ↦ (z, g z, fun i : Fin n ↦ iteratedDeriv i g z)) c := by
       refine continuousAt_id.prodMk (dg.continuousAt.prodMk (continuousAt_pi' fun i ↦ ?_))
